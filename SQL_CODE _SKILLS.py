@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Feb 26 17:13:43 2020
 
-@author: crein
-"""
 
 
 CREATE TABLE CUSTOMERS(
@@ -14,7 +9,6 @@ CREATE TABLE CUSTOMERS(
    SALARY   DECIMAL (18, 2),  -- 18 total digits, 2 after the period     
    PRIMARY KEY (ID)
 );
-
 
 
 
@@ -1036,7 +1030,1243 @@ WHERE m.season = '2014/2015'
 
 
 
+MORE IN DEPTH SQL CODE EXAMPLES
 
+
+QUERY INFORMATION_SCHEMA WITH SELECT
+
+-- Query the right table in information_schema
+SELECT table_name 
+FROM information_schema.tables
+-- Specify the correct table_schema value
+WHERE table_schema = 'public';
+
+
+-- Query the right table in information_schema to get columns
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'university_professors' AND table_schema = 'public';
+
+
+CREATING TABLES
+
+-- Create a table for the professors entity type
+CREATE TABLE professors (
+ firstname text,
+ lastname text
+);
+
+-- Print the contents of this table
+SELECT * 
+FROM professors
+
+
+ADDING COLUMNS
+
+-- Add the university_shortname column
+ALTER TABLE professors
+ADD COLUMN university_shortname text;
+
+-- Print the contents of this table
+SELECT * 
+FROM professors
+
+
+
+
+RENAMING AND DROPPING COLUMNS
+
+-- Rename the organisation column
+ALTER TABLE affiliations
+RENAME COLUMN organisation TO organization;
+
+
+-- Delete the university_shortname column
+ALTER TABLE affiliations
+DROP COLUMN university_shortname;
+
+
+MIGRATE DATA FROM ONE TABLE TO ANOTHER TABLE STRUCTURE
+
+-- Insert unique professors into the new table
+INSERT INTO professors 
+SELECT DISTINCT firstname, lastname, university_shortname 
+FROM university_professors;
+
+-- Doublecheck the contents of professors
+SELECT * 
+FROM professors;
+
+DROP TABLE
+
+DROP TABLE university_professors;
+
+
+
+CASTING DATA TYPES
+
+-- Calculate the net amount as amount + fee
+SELECT transaction_date, amount + CAST(fee AS integer) AS net_amount 
+FROM transactions;
+
+
+CHANGING DATA TYPES WITH ALTER COLUMN
+
+-- Specify the correct fixed-length character type
+ALTER TABLE professors
+ALTER COLUMN university_shortname
+TYPE CHAR(3);
+
+
+CONVERTING TYPES USING A FUNCTION
+
+-- Convert the values in firstname to a max. of 16 characters
+ALTER TABLE professors 
+ALTER COLUMN firstname 
+TYPE varchar(16)
+USING SUBSTRING(firstname FROM 1 FOR 16);
+
+
+SETTING A NOT NULL CONSTRAINT ON AN EXISTING TABLE COLUMN
+
+-- Disallow NULL values in firstname
+ALTER TABLE professors 
+ALTER COLUMN firstname
+SET NOT NULL;
+
+
+SETTING A UNIQUE CONSTRAINT ON AN EXISTING TABLE COLUMN
+
+-- Make universities.university_shortname unique
+ALTER TABLE universities
+ADD CONSTRAINT university_shortname_unq UNIQUE(university_shortname);
+
+
+-- Rename the organization column to id
+ALTER TABLE organizations
+RENAME COLUMN organization TO id;
+
+-- Make id a primary key
+ALTER TABLE organizations
+ADD CONSTRAINT organization_pk PRIMARY KEY (id);
+
+
+
+DETERMINING WHETHER A CERTAIN COLUMN CAN BE USED AS AN UNIQUE INDENTIFYING KEY
+
+-- Count the number of distinct values in the university_city column
+SELECT COUNT(DISTINCT(university_city)) 
+FROM universities;
+
+-- Try out different combinations
+SELECT COUNT(DISTINCT (firstname,lastname))
+FROM professors;
+
+
+
+
+ADDING A  SERIAL SURROGATE
+
+-- Add the new column to the table
+ALTER TABLE professors 
+ADD COLUMN id serial;
+
+-- Make id a primary key
+ALTER TABLE professors 
+ADD CONSTRAINT professors_pkey PRIMARY KEY (id);
+
+
+
+CONCATENATE COLUMNS TO A SURROGATE KEY
+
+FROM cars;
+
+-- Add the id column
+ALTER TABLE cars
+ADD COLUMN id varchar(128);
+
+-- Update id with make + model
+UPDATE cars
+SET id = CONCAT(make, model);
+
+-- Make id a primary key
+ALTER TABLE cars
+ADD CONSTRAINT id_pk PRIMARY KEY(id);
+
+
+
+REFERENCING A TABLE WITH A FOREIGN KEY
+
+-- Rename the university_shortname column
+ALTER TABLE professors
+RENAME COLUMN university_shortname TO university_id;
+
+-- Add a foreign key on professors referencing universities
+ALTER TABLE professors  
+ADD CONSTRAINT professors_fkey FOREIGN KEY(university_id) REFERENCES universities(id);
+
+
+
+POPULATING A TABLES COLUMN WITH VALUES FROM ANOTHER TABLES COLUMN
+
+-- Set professor_id to professors.id where firstname, lastname correspond to rows in professors
+UPDATE affiliations
+SET professor_id = professors.id
+FROM professors
+WHERE affiliations.firstname = professors.firstname AND affiliations.lastname = professors.lastname;
+
+
+
+RETRIEVING TABLE FOREIGN KEY CONSTRAINT INFORMATION
+
+-- Identify the correct constraint name
+SELECT constraint_name, table_name, constraint_type
+FROM information_schema.table_constraints
+WHERE constraint_type = 'FOREIGN KEY';
+
+
+DROPPING A CONSTRAINT IN ORDER TO ALTER THE CONSTRAINT
+
+-- Drop the right foreign key constraint
+ALTER TABLE affiliations
+DROP CONSTRAINT affiliations_organization_id_fkey;
+
+
+ADDING BACK THE ALTERED CONSTRAINT WITH DIFFERENT REFERENTIAL INTEGRITY INSTRUCTIONS
+
+-- Add a new foreign key constraint from affiliations to organizations which cascades deletion
+ALTER TABLE affiliations
+ADD CONSTRAINT affiliations_organization_id_fkey FOREIGN KEY(organization_id) REFERENCES organizations (id) ON DELETE CASCADE;
+
+
+
+
+
+
+
+
+SUBQUERYS
+
+INSIDE THE WHERE CLAUSE
+
+# notice filter 'year' must be the same in the sub and main query
+SELECT *
+FROM populations
+WHERE life_expectancy >
+   1.15 * (SELECT AVG(life_expectancy)
+   FROM populations
+   WHERE year = 2015) AND
+  year = 2015;
+  
+
+SELECT DISTINCT name
+  FROM languages
+WHERE code IN
+  (SELECT code
+   FROM countries
+   WHERE region = 'Middle East')
+ORDER BY name;
+
+THE INNER JOIN EQUIVALENT TO THE ABOVE
+
+SELECT DISTINCT languages.name AS language
+FROM languages
+INNER JOIN countries
+ON languages.code = countries.code
+WHERE region = 'Middle East'
+ORDER BY language;
+
+
+
+SELECT name
+  FROM cities AS c1
+  WHERE country_code IN
+(
+   SELECT e.code
+    FROM economies AS e
+      UNION -- combines the first two SELECT statements
+    SELECT c2.code
+    FROM currencies AS c2
+      EXCEPT -- returns only those rows not available in the following SELECT statement
+    SELECT p.country_code
+    FROM populations AS p
+);
+  
+ 
+SELECT name, country_code, city_proper_pop, metroarea_pop,
+	  -- Calculate city_perc
+      city_proper_pop / metroarea_pop * 100 AS city_perc
+   FROM cities
+   WHERE name IN
+     (SELECT capital
+     FROM countries
+     WHERE (continent = 'Europe'
+        OR continent LIKE '%America'))
+       AND metroarea_pop IS NOT NULL
+ORDER BY city_perc DESC
+LIMIT 10;
+  
+  
+  
+  
+  
+DETERMINING MISSING VALUES AFTER A JOIN
+(When joining countries table to continent table
+ on code column)
+
+SELECT code, name
+  FROM countries
+  WHERE continent = 'Oceania'
+  	AND code NOT IN
+  	(SELECT code
+  	 FROM currencies);
+  
+  
+  
+    
+SUBQUERY INSIDE THE SELECT CLAUSE COMPARED TO THE EQUIVALENT INNER JOIN
+
+SELECT countries.name AS country, COUNT(*) AS cities_num
+  FROM cities
+    INNER JOIN countries
+    ON countries.code = cities.country_code
+GROUP BY country
+ORDER BY cities_num DESC, country
+LIMIT 9;
+
+
+SELECT countries.name AS country,
+  (SELECT COUNT(*) AS cities_num
+   FROM cities
+   WHERE countries.code = cities.country_code) AS cities_num
+FROM countries
+ORDER BY cities_num DESC, country
+LIMIT 9;
+
+
+
+
+  
+ 
+
+SUBQUERY INSIDE THE FROM CLAUSE
+'''relates the local_name from countries to code from languages
+to ultimately get a count of local names'''
+SELECT local_name, subquery.lang_num
+  FROM countries,
+  	(SELECT code, COUNT(*) AS lang_num
+  	 FROM languages
+  	 GROUP BY code) AS subquery
+  WHERE countries.code = subquery.code
+ORDER BY lang_num DESC;
+
+
+
+
+'''INNER JOING OF TWO TABLES
+USING A SELECTION FROM A SUBQUERY IN THE FROM CLAUSE THAT IS GROUPED
+BY CONTINENT'''
+SELECT name, continent, inflation_rate
+    FROM countries
+		INNER JOIN economies
+		ON countries.code = economies.code
+    WHERE year = 2015
+       AND inflation_rate IN (
+        SELECT MAX(inflation_rate) AS max_inf
+        FROM (
+             SELECT name, continent, inflation_rate
+             FROM countries
+             INNER JOIN economies
+             USING(code)--ON countries.code = economies.code
+             WHERE year = 2015) AS subquery
+           GROUP BY continent);
+ 
+   
+    
+    
+
+MORE SUBQUERY EXAMPLES
+
+-- Select fields
+SELECT code, inflation_rate, unemployment_rate
+  -- From economies
+  FROM economies
+  -- Where year is 2015 and code is not in
+  WHERE year = 2015 AND code NOT IN
+  	-- Subquery
+  	(SELECT code
+  	 FROM countries
+  	 WHERE (gov_form = 'Constitutional Monarchy' OR gov_form LIKE '%Republic%'))
+-- Order by inflation rate
+ORDER BY inflation_rate;
+    
+    
+    
+
+SELECT DISTINCT c.name, e.total_investment, e.imports
+  FROM countries AS c
+    LEFT JOIN economies AS e
+      ON (c.code = e.code
+        AND c.code IN (
+          SELECT l.code
+          FROM languages AS l
+          WHERE official = 'true'
+        ) )
+  WHERE region = 'Central America' AND year = 2015
+ORDER BY name;
+
+
+
+
+SELECT name, country_code, city_proper_pop, metroarea_pop,
+	  -- Calculate city_perc
+      city_proper_pop / metroarea_pop * 100 AS city_perc
+   FROM cities
+   WHERE name IN
+     (SELECT capital
+     FROM countries
+     WHERE (continent = 'Europe'
+        OR continent LIKE '%America'))
+       AND metroarea_pop IS NOT NULL
+ORDER BY city_perc DESC
+LIMIT 10;
+
+
+
+
+REMOVING MISSING VALUES
+
+-- Return the specified columns
+SELECT IncidentDateTime, IncidentState
+FROM Incidents
+-- Exclude all the missing values from IncidentState  
+WHERE IncidentState IS NOT NULL;
+
+IMPUTING MISSING VALUES
+
+-- Check the IncidentState column for missing values and replace them with the City column
+SELECT IncidentState, ISNULL(IncidentState, City) AS Location
+FROM Incidents
+-- Filter to only return missing values from IncidentState
+WHERE IncidentState IS NULL
+
+
+-- Replace missing values in Country with the first non-missing value from IncidentState or City or 'Unknown'
+SELECT Country, COALESCE(IncidentState, City, 'Unknown') AS Location
+FROM Incidents
+WHERE Country IS NULL
+
+
+
+COUNTING THE NUMBER OF DAYS BETWEEN DATES
+
+"""
+year, yyyy, yy = Year
+quarter, qq, q = Quarter
+month, mm, m = month
+dayofyear = Day of the year
+day, dy, y = Day
+week, ww, wk = Week
+weekday, dw, w = Weekday
+hour, hh = hour
+minute, mi, n = Minute
+second, ss, s = Second
+millisecond, ms = Millisecond
+
+"""
+
+-- Return the difference in OrderDate and ShipDate
+SELECT OrderDate, ShipDate, 
+       DATEDIFF(y, OrderDate, ShipDate) AS Duration
+FROM Shipments
+
+
+
+ADDING DAYS TO A DATE
+
+-- Return the DeliveryDate as 5 days after the ShipDate
+SELECT OrderDate, 
+       DATEADD(y, 5, ShipDate) AS DeliveryDate
+FROM Shipments
+
+
+-- Round Cost to the nearest dollar
+SELECT Cost, 
+       ROUND(Cost,0) AS RoundedCost
+FROM Shipments
+
+
+
+ABSOLUTE VALUES, SQUARES, AND SQUARE ROOT
+
+SELECT DeliveryWeight,
+       ABS(DeliveryWeight) AS AbsoluteValue
+FROM Shipments
+
+SELECT WeightValue, 
+       SQUARE(WeightValue) AS WeightSquare, 
+       SQRT(WeightValue) AS WeightSqrt
+FROM Shipments
+
+
+CREATING AND USING VARIABLES
+
+-- Declare the variable (a SQL Command, the var name, the datatype)
+DECLARE @counter INT 
+
+-- Set the counter to 20
+SET @counter = 20
+
+-- Select the counter
+SELECT @counter
+
+
+
+CREATING A WHILE LOOP
+
+DECLARE @counter INT 
+SET @counter = 20
+
+-- Create a loop
+WHILE @counter < 30
+
+-- Loop code starting point
+BEGIN
+	SELECT @counter = @counter + 1
+-- Loop finish
+END
+
+-- Check the value of the variable
+SELECT @counter
+
+
+
+QUERIES WITH DERIVED TABLES
+
+SELECT a.RecordId, a.Age, a.BloodGlucoseRandom, 
+-- Select maximum glucose value (use colname from derived table)    
+       b.MaxGlucose
+FROM Kidney a
+-- Join to derived table
+JOIN (SELECT Age, MAX(BloodGlucoseRandom) AS MaxGlucose FROM Kidney GROUP BY Age) b
+-- Join on Age
+ON a.Age = b.Age
+
+
+
+
+CREATING A CTE
+
+-- Specify the keyowrds to create the CTE
+WITH BloodGlucoseRandom -- This creates a table out the same table that can be used in the following query
+AS (SELECT MAX(BloodGlucoseRandom) AS MaxGlucose FROM Kidney)
+
+SELECT a.Age, b.MaxGlucose
+FROM Kidney a
+-- Join the CTE on blood glucose equal to max blood glucose
+JOIN BloodGlucoseRandom b
+ON a.BloodGlucoseRandom = b.MaxGlucose;
+
+
+-- Create the CTE
+WITH BloodPressure
+AS (SELECT MAX(BloodPressure) AS MaxBloodPressure
+FROM kidney b) -- This creates a table out of the same that can be used in the following query
+
+SELECT *
+FROM Kidney a
+-- Join the CTE  
+JOIN  BloodPressure AS b
+ON a.BloodPressure = b.MaxBloodPressure;
+
+
+
+WINDOWS FUNCTIONS WITH AGGREGATIONS
+
+SELECT OrderID, TerritoryName, 
+       -- Total price for each partition
+        SUM(OrderPrice) OVER(PARTITION BY TerritoryName) AS TotalPrice -- OVER creates a window for the entire table 
+       -- Create the window and partitions
+       
+FROM Orders
+
+
+
+SELECT OrderID, TerritoryName, 
+       -- Number of rows per partition
+       COUNT(OrderPrice) 
+       -- Create the window and partitions
+       OVER(PARTITION BY TerritoryName) AS TotalOrders
+FROM Orders
+
+
+
+
+
+
+WINDOWS FUNCTIONS
+LEAD(), LAG(), FIRST_VALUE(), and LAST_VALUE()
+
+
+
+FIRST VALUE IN A WINDOW
+
+SELECT TerritoryName, OrderDate, 
+       -- Select the first value in each partition
+       FIRST_VALUE(OrderDate) 
+       -- Create the partitions and arrange the rows
+       OVER(PARTITION BY TerritoryName ORDER BY OrderDate) AS FirstOrder
+FROM Orders
+
+
+
+PREVIOUS AND NEXT VALUES
+
+SELECT TerritoryName, OrderDate, 
+       -- Specify the previous OrderDate in the window
+       LAG(OrderDate) 
+       -- Over the window, partition by territory & order by order date
+       OVER(PARTITION BY TerritoryName ORDER BY OrderDate) AS PreviousOrder,
+       -- Specify the next OrderDate in the window
+       LEAD(OrderDate) 
+       -- Create the partitions and arrange the rows
+       OVER(PARTITION BY OrderDate ORDER BY OrderDate) AS NextOrder
+FROM Orders
+
+
+
+
+CREATING RUNNING TOTALS
+
+SELECT TerritoryName, OrderDate, 
+       -- Create a running total
+       SUM(OrderPrice)
+       -- Create the partitions and arrange the rows
+       -- Create the running total by ordering by a column that has a different value for each row
+       OVER(PARTITION BY TerritoryName ORDER BY OrderDate) AS TerritoryTotal	  
+FROM Orders
+
+
+
+
+ASSIGNING ROW NUMBERS
+
+SELECT TerritoryName, OrderDate, 
+       -- Assign a row number
+       ROW_NUMBER()
+       -- ORDER BY in the OVER clause is required when using ROW_NUMBER()
+       -- Create the partitions and arrange the rows
+       OVER(PARTITION BY TerritoryName ORDER BY OrderDate) AS OrderCount
+FROM Orders
+
+
+
+CALCULATING STANDARD DEVIATION
+
+SELECT OrderDate, TerritoryName, 
+       -- Calculate the standard deviation
+	   STDEV(OrderPrice) 
+       OVER() AS StdDevPrice	  
+FROM Orders
+
+
+# calculation of the running standard deviation
+
+SELECT OrderDate, TerritoryName, 
+       -- Calculate the standard deviation
+	   STDEV(OrderPrice) 
+       OVER(PARTITION BY TerritoryName ORDER BY OrderDate) AS StdDevPrice	  
+FROM Orders
+
+
+
+
+CALCULATING MODE
+
+-- Create a CTE Called ModePrice which contains two columns
+ WITH ModePrice AS 
+(
+	SELECT OrderPrice, 
+	ROW_NUMBER() 
+	OVER(PARTITION BY OrderPrice ORDER BY OrderPrice) AS UnitPriceFrequency
+	FROM Orders 
+)
+'''
+USING ROW_NUMBER IS THE KEY TO GETTING A COUNT OF THE PARTITIONED ROWS TO THEN
+CALCULATE THE MODE OF THE DATA
+'''
+SELECT OrderPrice AS ModeOrderPrice
+FROM ModePrice
+-- Select the maximum UnitPriceFrequency from the CTE
+WHERE UnitPriceFrequency IN (SELECT MAX(UnitPriceFrequency) FROM ModePrice);
+
+
+
+
+
+
+-- Select the count of profits_change, 
+-- subtract from total number of rows, and alias as missing
+SELECT COUNT(*) - COUNT(profits_change) as missing
+FROM fortune500;
+
+-- Use coalescee for specifying a default or backup
+-- value when a column contains NULL values.
+SELECT COALESCE(industry, sector, 'Unknown') AS industry2,
+       COUNT(*) AS count
+ FROM fortune500 
+ GROUP BY industry2
+ ORDER BY count DESC
+ LIMIT 1;
+
+
+--using coalesce with a series of joins
+SELECT company_original.name, title, rank
+    FROM company AS company_original
+       	   LEFT JOIN company AS company_parent
+       ON company_original.parent_id = company_parent.id 
+           INNER JOIN fortune500 
+              ON coalesce(company_parent.ticker, 
+                 company_original.ticker) = 
+                 fortune500.ticker
+           ORDER BY rank; 
+           
+ 
+TWO WAYS TO CAST DATA TYPE OF A SQL COLUMN
+       
+-- Select the original value
+SELECT profits_change, 
+	   -- Cast profits_change
+       CAST(profits_change AS integer) AS profits_change_int
+  FROM fortune500;
+  
+-- Select the count of each revenues_change integer value
+SELECT revenues_change::integer AS int_revenue, COUNT(*)
+  FROM fortune500
+ GROUP BY int_revenue
+ -- order by the values of revenues_change
+ ORDER BY int_revenue;
+ 
+TO EXAMINE THE DATA TYPES OF YOUR SQL TABLE COLUMNS BEFORE DATA ANALYSIS
+
+SELECT COLUMN_NAME, DATA_TYPE 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'yourTableName'
+ 
+
+
+  -- Select average revenue per employee by sector
+SELECT sector, 
+       AVG(revenues/employees::numeric) AS avg_rev_employee
+ FROM fortune500
+ GROUP BY sector
+ -- Use the column alias to order the results
+ ORDER BY avg_rev_employee;
+ 
+ -- INCORPORATING STACKOVERFLOW INTO A QUERY
+SELECT unanswered_count/question_count::numeric AS computed_pct, 
+  unanswered_pct
+  FROM stackoverflow
+  WHERE question_count != 0 
+  LIMIT 10;
+  
+  
+DISPLAY AGGREGATE VALUES OF THE GROUPED TAGS IN THE SUBQUERY
+
+SELECT min(maxval),
+	   -- min
+       max(maxval),
+       -- max
+       avg(maxval),
+       -- avg
+       stddev(maxval)
+  -- Subquery to compute max of question_count by tag
+  FROM (SELECT max(question_count) AS maxval, tag
+        FROM stackoverflow
+        GROUP BY tag) AS max_results;
+        
+
+-- Truncate employees of fortune 500 companies into bins of 100000
+SELECT trunc(employees, -5) AS employee_bin,
+       -- Count number of companies with each truncated value
+       COUNT(title)
+  FROM fortune500
+  GROUP BY employee_bin
+  ORDER BY employee_bin;
+  
+SAME AS ABOVE BUT with BINS OF 10000 UP TO 99999
+-- Truncate employees
+SELECT trunc(employees, -4) AS employee_bin,
+       -- Count number of companies with each truncated value
+       COUNT(title)
+  FROM fortune500
+ -- Limit to which companies?
+ WHERE employees < 100000
+ -- Use alias to group
+ GROUP BY employee_bin
+ -- Use alias to order
+ ORDER BY employee_bin;
+ 
+ 
+ 
+ 
+ 
+USING COMMON TABLE EXPRESSIONS TO SIMPLIFY THE JOINS
+
+USING generate_series for two sets of bounding numbers for grouping a count
+WITH bins AS (
+      SELECT generate_series(2200, 3050, 50) AS lower,
+             generate_series(2250, 3100, 50) AS upper),
+     -- Subset stackoverflow to just tag dropbox (Step 1)
+     dropbox AS (
+      SELECT question_count 
+        FROM stackoverflow
+       WHERE tag='dropbox') 
+-- Select columns for result
+-- What column are you counting to summarize?
+SELECT lower, upper, count(question_count) 
+  FROM bins  -- Created above
+       -- Join to dropbox (created above), 
+       -- keeping all rows from the bins table in the join
+       LEFT JOIN dropbox
+       -- Compare question_count to lower and upper
+         ON lower <= question_count 
+         AND upper > question_count
+        
+ -- Group by lower and upper to count values in each bin
+ GROUP BY lower, upper
+ -- Order by lower to put bins in order
+ ORDER BY lower;
+ 
+ 
+ 
+
+ 
+ -- What groups are you computing statistics by?
+SELECT sector,
+       -- Select the mean of assets with the avg function
+       AVG(assets) AS mean,
+       -- Select the median
+       percentile_disc(0.5) WITHIN GROUP (ORDER BY assets) AS median
+  FROM fortune500
+  GROUP BY sector
+  ORDER BY mean;
+  
+  
+  
+  
+
+INTERMEDIATE DATA PROCESSING WITH A TEMP TABLE
+
+DROP TABLE IF EXISTS profit80;
+
+CREATE TEMP TABLE profit80 AS
+  SELECT sector, 
+         percentile_disc(0.8) WITHIN GROUP (ORDER BY profits) AS pct80
+    FROM fortune500 
+   GROUP BY sector;
+
+-- Select columns, aliasing as needed
+SELECT title, fortune500.sector, 
+       profits, profits/pct80 AS ratio
+-- What tables do you need to join?  
+  FROM fortune500 
+       LEFT JOIN profit80
+-- How are the tables joined?
+       ON fortune500.sector=profit80.sector
+-- What rows do you want to select?
+ WHERE profits > pct80;
+ 
+ 
+ 
+ 
+SELECTING FROM A TEMP TABLE
+USING SELF AND INNNER JOINS
+
+-- To clear table if it already exists
+DROP TABLE IF EXISTS startdates;
+
+CREATE TEMP TABLE startdates AS
+SELECT tag, min(date) AS mindate
+  FROM stackoverflow
+ GROUP BY tag;
+ 
+-- Select tag (Remember the table name!) and mindate
+SELECT startdates.tag, 
+       mindate, 
+       -- Select question count on the min and max days
+	   so_min.question_count AS min_date_question_count,
+       so_max.question_count AS max_date_question_count,
+       -- Compute the change in question_count (max- min)
+       so_max.question_count - so_min.question_count AS change
+  FROM startdates
+       -- Join startdates to stackoverflow with alias so_min
+       INNER JOIN stackoverflow AS so_min
+          -- tag and min_date need to match between tables
+          ON startdates.tag = so_min.tag
+         AND startdates.mindate = so_min.date
+       -- Join to stackoverflow again with alias so_max
+       INNER JOIN stackoverflow AS so_max
+          -- tag and a date need to match between tables
+          ON startdates.tag = so_max.tag
+         AND so_max.date = '2018-09-25';
+ 
+    
+    
+    
+
+DROP TABLE IF EXISTS correlations;
+
+CREATE TEMP TABLE correlations AS
+SELECT 'profits'::varchar AS measure,
+       corr(profits, profits) AS profits,
+       corr(profits, profits_change) AS profits_change,
+       corr(profits, revenues_change) AS revenues_change
+  FROM fortune500;
+
+INSERT INTO correlations
+SELECT 'profits_change'::varchar AS measure,
+       corr(profits_change, profits) AS profits,
+       corr(profits_change, profits_change) AS profits_change,
+       corr(profits_change, revenues_change) AS revenues_change
+  FROM fortune500;
+
+INSERT INTO correlations
+SELECT 'revenues_change'::varchar AS measure,
+       corr(revenues_change, profits) AS profits,
+       corr(revenues_change, profits_change) AS profits_change,
+       corr(revenues_change, revenues_change) AS revenues_change
+  FROM fortune500;
+
+-- Select each column, rounding the correlations
+SELECT measure, 
+       round(profits::numeric, 2) AS profits,
+       round(profits_change::numeric, 2) AS profits_change,
+       round(revenues_change::numeric, 2) AS revenues_change
+  FROM correlations;
+  
+  
+  
+  
+USING TRIM FUNCTION
+  
+SELECT distinct street,
+       -- Trim off unwanted characters from street
+       trim(street, '0123456789 #/.' ) AS cleaned_street
+  FROM evanston311
+ ORDER BY street;
+ 
+
+ USING LIKE, ILIKE, AND NOT LIKE
+ 
+-- Count rows with each category
+SELECT category, count(*)
+  FROM evanston311 
+ WHERE (description LIKE '%trash%'
+    OR description ILIKE '%garbage%') 
+   AND category NOT LIKE '%Trash%'
+   AND category NOT LIKE '%Garbage%'
+ -- What are you counting?
+ GROUP BY category
+ --- order by most frequent values
+ ORDER BY count DESC
+ LIMIT 10;
+ 
+ 
+ 
+ RTRIM USED WITH CONCAT
+ 
+ -- Concatenate house_num, a space, and street
+-- and trim spaces from the start of the result
+SELECT rtrim(concat(house_num, ' ', street)) AS address
+  FROM evanston311;
+  
+
+USING SPLIT_PART
+
+-- Select the first word of the street value
+SELECT split_part(street, ' ', 1) AS street_name, 
+       count(*)
+  FROM evanston311
+ GROUP BY street_name
+ ORDER BY count DESC
+ LIMIT 20;
+ 
+ 
+ USING LEFT, SPLIT_PART AND CONCAT(||) WITH A CASE STATEMENT
+ 
+ -- Select the first 50 chars when length is greater than 50
+SELECT CASE WHEN length(description) > 50
+            THEN left(description, 50) || '...'
+       -- otherwise just select description
+       ELSE description
+       END
+  FROM evanston311
+ -- limit to descriptions that start with the word I
+ WHERE split_part(description, ' ', 1) LIKE 'I'
+ ORDER BY description;
+ 
+ 
+ 
+
+USING TEMP TABLE WITH JOIN AND MULTIPLE TRANSFORMATIONS
+
+-- Code from previous step
+DROP TABLE IF EXISTS recode;
+CREATE TEMP TABLE recode AS
+  SELECT DISTINCT category, 
+         rtrim(split_part(category, '-', 1)) AS standardized
+  FROM evanston311;
+  
+  
+UPDATE recode SET standardized='Trash Cart' 
+ WHERE standardized LIKE 'Trash%Cart';
+UPDATE recode SET standardized='Snow Removal' 
+ WHERE standardized LIKE 'Snow%Removal%';
+UPDATE recode SET standardized='UNUSED' 
+ WHERE standardized IN ('THIS REQUEST IS INACTIVE...Trash Cart', 
+               '(DO NOT USE) Water Bill',
+               'DO NOT USE Trash', 'NO LONGER IN USE');
+
+-- Select the recoded categories and the count of each
+SELECT standardized, COUNT(*)
+-- From the original table and table with recoded values
+  FROM evanston311
+       LEFT JOIN recode 
+       -- What column do they have in common?
+       ON evanston311.category = recode.category
+ -- What do you need to group by to count?
+ GROUP BY standardized
+ -- Display the most common val values first
+ ORDER BY count(standardized) DESC;
+ 
+ 
+ 
+ 
+ 
+ 
+ADDING CASTING AND AGGREGATE FUNCTIONS TO ABOVE
+ 
+-- To clear table if it already exists
+DROP TABLE IF EXISTS indicators;
+
+-- Create the temp table
+CREATE TEMP TABLE indicators AS
+  SELECT id, 
+         CAST (description LIKE '%@%' AS integer) AS email,
+         CAST (description LIKE '%___-___-____%' AS integer) AS phone 
+    FROM evanston311;
+  
+-- Select the column you'll group by
+SELECT priority, 
+       -- Compute the proportion of rows with each indicator
+  sum(email)/count(email)::numeric AS email_prop, 
+  sum(phone)/count(phone)::numeric AS phone_prop
+  -- Tables to select from
+  FROM evanston311
+       LEFT JOIN indicators
+       -- Joining condition
+       ON evanston311.id =indicators.id
+ -- What are you grouping by?
+ GROUP BY priority;
+ 
+ 
+
+COMBINING CASTING WITH A SUBQUERY, GENERATE SERIES AND JOIN
+
+-- Count number of requests made per day
+SELECT daily_series.day, count(id) AS count
+-- Use a daily series from 2016-01-01 to 2018-06-30 
+-- to include days with no requests
+  FROM (SELECT generate_series('2016-01-01',  -- series start date
+                               '2018-06-30',  -- series end date
+                               '1 day'::interval)::date AS day) AS daily_series
+       LEFT JOIN evanston311
+       -- match day from above (which is a date) to date_created
+       ON daily_series.day = date_created::date
+ GROUP BY daily_series.day
+ ORDER BY count DESC;
+ 
+ 
+ 
+
+USING DATES, TIMESTAMPS, AND TIME ZONES
+
+-- Count requests created on January 31, 2017
+SELECT count(*) 
+  FROM evanston311
+ WHERE date_created:: date = 'January 31, 2017';
+ 
+-- Subtract the min date_created from the max
+SELECT max(date_created) - min(date_created)
+  FROM evanston311;
+  
+
+
+-- Select the category and the average completion time by category
+SELECT category, 
+       AVG(date_completed - date_created) AS completion_time
+  FROM evanston311
+ Group by category
+-- Order the results
+ Order by completion_time Desc;
+ 
+ 
+ 
+ USING EXTRACT
+ 
+ -- Extract the month from date_created and count requests
+SELECT EXTRACT(MONTH FROM date_created) AS month, 
+    count(id)   
+  FROM evanston311
+ -- Limit the date range
+ WHERE date_created >= '2016-01-01'
+   AND date_created < '2018-01-01'
+ -- Group by what to get monthly counts?
+ GROUP BY month;
+ 
+ 
+ USING DATE_PART
+ 
+ -- Get the hour and count requests
+SELECT date_part('hour', date_created) AS hour,
+       count(*)
+  FROM evanston311
+ GROUP BY hour
+ -- Order results to select most common
+ ORDER BY count DESC
+ LIMIT 1;
+ 
+ 
+ 
+ USING TO_CHAR FOR NAMES AND DOW FOR INTEGER VALUES
+-- Select name of the day of the week the request was created 
+SELECT to_char(date_created, 'day') AS day, 
+       -- Select avg time between request creation and completion
+       avg(date_completed - date_created) AS duration 
+  FROM evanston311 
+ -- Group by the name of the day of the week and 
+ -- integer value of day of week the request was created
+ GROUP BY day, EXTRACT(DOW FROM date_created) 
+ -- Order by integer value of the day of the week 
+ -- the request was created
+ ORDER BY EXTRACT(DOW FROM date_created);
+ 
+ 
+USING DATE TRUNCATION
+
+-- Aggregate daily counts by month
+SELECT date_trunc('month', day) AS month,
+       avg(count)
+  -- Subquery to compute daily counts
+  FROM (SELECT date_trunc('day', date_created) AS day,
+               count(*) AS count
+          FROM evanston311
+         GROUP BY day) AS daily_count
+ GROUP BY month
+ ORDER BY month;
+ 
+ 
+ 
+ FINDING MISSING DATES WITH GENERATE_SERIES AND SUBQUERIES
+ 
+ SELECT day
+-- 1) Subquery to generate all dates
+-- from min to max date_created
+  FROM (SELECT generate_series(min(date_created),
+                               max(date_created),
+                               '1 day'::interval)::date AS day
+          -- What table is date_created in?
+          FROM evanston311) AS all_dates      
+-- 4) Select dates (day from above) that are NOT IN the subquery
+ WHERE day NOT IN 
+       -- 2) Subquery to select all date_created values as dates
+       (SELECT date_created::date
+          FROM evanston311);
+        
+        
+USE GENERATE_SERIES TO AGGREGATE DATA BY NON-STANDARD DATE/TIME INTERVALS, SUCH AS SIX MONTHS
+
+
+-- cte of 6 month bounded generate_series
+WITH bins AS (
+	 SELECT generate_series('2016-01-01',
+                            '2018-01-01',
+                            '6 months'::interval) AS lower,
+            generate_series('2016-07-01',
+                            '2018-07-01',
+                            '6 months'::interval) AS upper),
+
+-- cte of 1 day interval generate_series with left join
+     daily_counts AS (
+     SELECT daily_series.day, count(date_created) AS count
+       FROM (SELECT generate_series('2016-01-01',
+                                    '2018-06-30',
+                                    '1 day'::interval)::date AS day) AS daily_series
+            LEFT JOIN evanston311
+            ON daily_series.day = date_created::date
+      GROUP BY daily_series.day)
+-- Select bin bounds
+SELECT lower, 
+       upper, 
+       -- Compute median of count for each bin
+       percentile_disc(0.5) WITHIN GROUP (ORDER BY count) AS median
+  -- Join bins and daily_counts
+  FROM bins
+       LEFT JOIN daily_counts
+       -- Where the day is between the bin bounds
+       ON day >= lower
+          AND day < upper
+ -- Group by bin bounds
+ GROUP BY lower, upper
+ ORDER BY lower;
+ 
+ 
+ 
+ 
+CREATING MONTHLY AVERAGES PER DAY WITH MISSING DATES
+ 
+ -- generate series with all days from 2016-01-01 to 2018-06-30
+WITH all_days AS 
+     (SELECT generate_series('2016-01-01',
+                             '2018-06-30',
+                             '1 day'::interval) AS date),
+     -- Subquery to compute daily counts
+     daily_count AS 
+     (SELECT date_trunc('day', date_created) AS day,
+             count(*) AS count
+        FROM evanston311
+       GROUP BY day)
+-- Aggregate daily counts by month using date_trunc
+SELECT date_trunc('month', date) AS month,
+       -- Use coalesce to replace NULL count values with 0
+       avg(coalesce(count, 0)) AS average
+  FROM all_days
+       LEFT JOIN daily_count
+       -- Joining condition
+       ON all_days.date=daily_count.day
+ GROUP BY month
+ ORDER BY month; 
+ 
+ 
+ 
+ 
+USING LAG AND LEAD
+
+-- Compute the gaps using a cte
+WITH request_gaps AS (
+        SELECT date_created,
+               -- lead or lag
+               lag(date_created) OVER (ORDER BY date_created) AS previous,
+               -- compute gap as date_created minus lead or lag
+               date_created - lag(date_created) OVER (ORDER BY date_created) AS gap
+          FROM evanston311)
+-- Select the row with the maximum gap
+SELECT *
+  FROM request_gaps
+-- Subquery to select maximum gap from request_gaps
+ WHERE gap = (SELECT max(gap) 
+                FROM request_gaps);
 
 
 
