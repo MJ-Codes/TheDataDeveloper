@@ -1564,70 +1564,6 @@ class Calculator:
 
 
 
-*********MOVIE PROJECT********
-
-
-MENU_PROMPT =("\nEnter 'a' to add a movie, \n'l' to see your movies, \n'f' to find a movie by title, or \n'q' to quit: ")
-movies = []
-
-
-def add_movie():
-    title = input("Enter the movie title: ")
-    director = input("Enter the movie director: ")
-    year = input("Enter the movie release year: ")
-
-    movies.append({
-        'title': title,
-        'director': director,
-        'year': year
-    })
-
-
-def show_movies():
-    for movie in movies:
-        print_movie(movie)
-
-
-def print_movie(movie):
-    print(f"\nTitle: {movie['title']}")
-    print(f"Director: {movie['director']}")
-    print(f"Release year: {movie['year']}\n")
-    
-
-
-def find_movie():
-    search_title = input("Enter movie title you're looking for: ")
-
-    for movie in movies:
-        if movie["title"].lower() == search_title.lower():
-            print_movie(movie)
-
-
-user_options = {
-    "a": add_movie,
-    "l": show_movies,
-    "f": find_movie
-}
-
-
-def menu():
-    selection = input(MENU_PROMPT)
-    while selection != 'q':
-        if selection in user_options:
-            selected_function = user_options[selection]
-            selected_function()
-        else:
-            print('Unknown command. Please try again.')
-
-        selection = input(MENU_PROMPT)
-
-
-menu()
-
-
-
-
-
 
 ERROR HANDLING
 
@@ -2246,275 +2182,7 @@ class Calculator:
     
  
     
-    
-    
-***BOOK DATABASE PROJECT***  
-    
-THE MAIN APP   
-    
-    
-from utils import database
-
-
-USER_CHOICE = """
-Enter:
-- 'a' to add a new book
-- 'l' to list all books
-- 'r' to mark a book as read
-- 'd' to delete a book
-- 'q' to quit
-Your choice: """
-
-
-
-
-
-def menu():
-    database.create_book_table()
-    user_input = input(USER_CHOICE)
-    while user_input != 'q':
-        if user_input == 'a':
-            prompt_add_book()
-        elif user_input == 'l':
-            list_books()
-        elif user_input == 'r':
-            prompt_read_book()
-        elif user_input == 'd':
-            prompt_delete_book()
-
-        user_input = input(USER_CHOICE)
-
-
-def prompt_add_book():
-    name = input('Enter the new book name: ')
-    author = input('Enter the new book author: ')
-
-    database.add_book(name, author)
-
-
-def list_books():
-    for book in database.get_all_books():
-        read = 'YES' if book['read'] else 'NO'
-        print(f"{book['name']} by {book['author']} — Read: {read}")
-
-
-def prompt_read_book():
-    name = input('Enter the name of the book you just finished reading: ')
-
-    database.mark_book_as_read(name)
-
-
-def prompt_delete_book():
-    name = input('Enter the name of the book you wish to delete: ')
-
-    database.delete_book(name)
-    
-
-
-
-USING AN IN-MEMORY LIST AS A DATABASE
-
-books = []
-
-
-def create_book_table():
-    pass
-
-
-def get_all_books():
-    return books
-
-
-def insert_book(name, author):
-    books.append({'name': name, 'author': author, 'read': False})
-
-
-def mark_book_as_read(name):
-    for book in books:
-        if book['name'] == name:
-            book['read'] = True
-
-
-def delete_book(name):
-    global books
-    books = [book for book in books if book['name'] != name]
-
-
-# def delete_book(name):
-#     for book in books:
-#         if book['name'] == name:
-#             books.remove(book) 
-        
-    
-    
-USING A TEXT FILE AS A DATABASE
-    
-    
-    
-books_file = 'books.txt'
-
-
-def create_book_table():
-    with open(books_file, 'w') as file:
-        pass  # just to make sure the file is there
-
-
-def get_all_books():
-    with open(books_file, 'r') as file:
-        lines = [line.strip().split(',') for line in file.readlines()]
-
-    return [
-        {'name': line[0], 'author': line[1], 'read': line[2]}
-        for line in lines
-    ]
-
-
-def add_book(name, author):
-    with open(books_file, 'a') as file:
-        file.write(f'{name},{author},0\n')
-
-
-def _save_all_books(books): # this syntax says this private function should be used only within this file is NOT meant to be called externally
-    with open(books_file, 'w') as file:
-        for book in books:
-            file.write(f"{book['name']},{book['author']},{book['read']}\n")
-
-
-def mark_book_as_read(name):
-    books = get_all_books()
-    for book in books:
-        if book['name'] == name:
-            book['read'] = '1'
-    _save_all_books(books)
-
-
-def delete_book(name):
-    books = get_all_books()
-    books = [book for book in books if book['name'] != name]
-    _save_all_books(books)
-
-
-# def delete_book(name):
-#     for book in books:
-#         if book['name'] == name:
-#             books.remove(book)
-    
-    
-    
-USING A JSON FILE AS A DATABASE
-
-import json
-
-
-books_file = 'books.json'
-
-
-def create_book_table():
-    with open(books_file, 'w') as file:
-        json.dump([], file)  # initialize file as empty list
-
-
-def get_all_books():
-    with open(books_file, 'r') as file:
-        return json.load(file)
-
-
-def insert_book(name, author):
-    books = get_all_books()
-    books.append({'name': name, 'author': author, 'read': False})
-    _save_all_books(books)# this syntax says this private function should be used only within this file is NOT meant to be called externally
-
-
-def _save_all_books(books):
-    with open(books_file, 'w') as file:
-        json.dump(books, file)
-
-
-def mark_book_as_read(name):
-    books = get_all_books()
-    for book in books:
-        if book['name'] == name:
-            book['read'] = '1'
-    _save_all_books(books)
-
-
-def delete_book(name):
-    books = get_all_books()
-    books = [book for book in books if book['name'] != name]
-    _save_all_books(books)
-    
-    
-    
-USING A SQL DATABASE 
-
-
-class DatabaseConnection:
-    def __init__(self, host):
-        self.connection = None
-        self.host = host
-    def __enter__(self):
-        self.connection = sqlite3.connect(self.host)
-        return self.connection
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.connection.commit()
-        self.connection.close()
-
-
-from typing import List, Tuple
-
-from utils.database_connection import DatabaseConnection
-
-Book = Tuple(int, str, str, int)
-
-
-def create_book_table() -> None:
-    with DatabaseConnection('data.db') as connection:
-        cursor = connection.cursor()
-
-        # SQLite automatically makes `integer primary key` row auto-incrementing (see link in further reading)
-        cursor.execute('CREATE TABLE books (id integer primary key, name text, author text, read integer default 0)')
-
-
-def get_all_books() -> List[Book]:
-    with DatabaseConnection('data.db') as connection:
-        cursor = connection.cursor()
-
-        cursor.execute('SELECT * FROM books')
-        books = [{'name': row[0], 'author': row[1], 'read': row[2]} for row in cursor.fetchall()]
-        #books = cursor.fetchall() a more simplified return
-    return books
-
-
-def insert_book(name: str, author: str) -> None:
-    with DatabaseConnection('data.db') as connection:
-        cursor = connection.cursor()
-
-        cursor.execute('INSERT INTO books (name, author) VALUES (?, ?, 0)', (name, author))
-
-
-def mark_book_as_read(name: str) -> None:
-    with DatabaseConnection('data.db') as connection:
-        cursor = connection.cursor()
-
-        cursor.execute('UPDATE books SET read=1 WHERE name=?', (name,))
-
-
-def delete_book(name: str) -> None:
-    with DatabaseConnection('data.db') as connection:
-        cursor = connection.cursor()
-
-        cursor.execute('DELETE FROM books WHERE name=?', (name,))
-
-
-
-
-
-
-
-
-
-
+   
 USING SQLALCHEMY IN PYTHON TO CONNECT TO A  SQLLITE DATABASE
 
 # Import create_engine
@@ -4508,6 +4176,649 @@ class ParsedItem:
 
 item = ParsedItem(ITEM_HTML)
 print(item.price())
+
+
+
+
+
+ASYNCHRONOUS DEVELOPMENT
+
+
+THREADS
+
+
+USING THREADING IN PYTHON
+
+import time
+from threading import Thread
+
+####### SINGLE THREAD
+
+def ask_user():
+	start = time.time()
+	user_input = input('Enter your name: ')
+	greet = f'Hello, {user_input}'
+	print(greet)
+	print('ask_user: ', time.time() - start)
+
+def complex_calculation():
+	print('Started calculating...')
+	start = time.time()
+	[x**2 for x in range(20000000)]
+	print('complex_calculation: ', time.time() - start)
+
+
+# With a single thread, we can do one at a time—e.g.
+start = time.time()
+ask_user()
+complex_calculation()
+print('Single thread total time: ', time.time() - start, '\n\n')
+
+
+####### TWO THREADS
+
+
+# With two threads, we can do them both at once...
+thread = Thread(target=complex_calculation)
+thread2 = Thread(target=ask_user)
+
+start = time.time()
+
+thread.start()
+thread2.start()
+
+thread.join()
+thread2.join()
+
+print('Two thread total time: ', time.time() - start)
+
+
+
+
+USING CONCURRENT.FUTURES FOR THREADING 
+
+
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+####### SINGLE THREAD
+
+def ask_user():
+	start = time.time()
+	user_input = input('Enter your name: ')
+	greet = f'Hello, {user_input}'
+	print(greet)
+	print('ask_user: ', time.time() - start)
+
+def complex_calculation():
+	print('Started calculating...')
+	start = time.time()
+	[x**2 for x in range(20000000)]
+	print('complex_calculation: ', time.time() - start)
+
+
+# With a single thread, we can do one at a time—e.g.
+start = time.time()
+ask_user()
+complex_calculation()
+print('Single thread total time: ', time.time() - start, '\n\n')
+
+
+####### TWO THREADS
+
+
+# With two threads, we can do them both at once...
+start = time.time()
+
+with ThreadPoolExecutor(max_workers=2) as pool:
+	pool.submit(complex_calculation)
+	pool.submit(ask_user)
+
+# You don't have to call pool.shutdown() because of the context manager
+
+print('Two thread total time: ', time.time() - start)
+
+
+
+MULTIPROCESSING 
+
+USING MULTIPROCESSING
+
+
+from multiprocessing import Process
+import time
+
+####### SINGLE PROCESS
+
+def ask_user():
+	start = time.time()
+	user_input = input('Enter your name: ')
+	greet = f'Hello, {user_input}'
+	print(greet)
+	print('ask_user: ', time.time() - start)
+
+def complex_calculation():
+	print('Started calculating...')
+	start = time.time()
+	[x**2 for x in range(20000000)]
+	print('complex_calculation: ', time.time() - start)
+
+
+# With a single thread, we can do one at a time—e.g.
+start = time.time()
+ask_user()
+complex_calculation()
+print('Single thread total time: ', time.time() - start, '\n\n')
+
+
+####### TWO PROCESSES
+
+
+# With two processes, we can do them both at once...
+process = Process(target=complex_calculation)
+process.start()
+
+start = time.time()
+
+ask_user()
+
+process.join()  # this waits for the process to finish
+
+print('Two process total time: ', time.time() - start)
+
+
+
+
+USING CONCURRENT.FUTURES FOR MULTIPROCESSING
+
+import time
+from concurrent.futures import ProcessPoolExecutor
+
+####### SINGLE PROCESS
+
+def ask_user():
+	start = time.time()
+	user_input = input('Enter your name: ')
+	greet = f'Hello, {user_input}'
+	print(greet)
+	print('ask_user: ', time.time() - start)
+
+def complex_calculation():
+	print('Started calculating...')
+	start = time.time()
+	[x**2 for x in range(20000000)]
+	print('complex_calculation: ', time.time() - start)
+
+
+# With a single thread, we can do one at a time—e.g.
+start = time.time()
+ask_user()
+complex_calculation()
+print('Single thread total time: ', time.time() - start, '\n\n')
+
+
+####### TWO PROCESSES
+
+
+# With two processes, we can do them both at once...
+start = time.time()
+
+with ProcessPoolExecutor(max_workers=2) as pool:
+	pool.submit(complex_calculation)
+	pool.submit(complex_calculation)
+
+print('Two process total time: ', time.time() - start)
+
+
+
+
+SHARED STATE IN THREADS
+
+from threading import Thread
+import time
+import random
+
+counter = 0
+
+def increment_counter():
+	global counter
+	time.sleep(random.randint(0, 2))
+	counter += 1
+	time.sleep(random.randint(0, 2))
+	print(f'New counter value: {counter}')
+	time.sleep(random.randint(0, 2))
+	print('-----------')
+
+
+
+for x in range(10):
+	t = Thread(target=increment_counter)
+	time.sleep(random.randint(0, 2))
+	t.start()
+
+
+
+
+
+
+QUEUING IN THREADS WITH SHARED STATE
+
+
+from threading import Thread
+import time
+import random
+import queue
+
+counter = 0
+job_queue = queue.Queue()
+counter_queue = queue.Queue()
+
+
+def increment_manager():
+	global counter
+	while True:
+		increment = counter_queue.get()  # this waits until an item is available and locks the queue
+		time.sleep(random.random())
+		old_counter = counter
+		time.sleep(random.random())
+		counter = old_counter + increment
+		time.sleep(random.random())
+		job_queue.put((f'New counter value {counter}', '------------'))
+		time.sleep(random.random())
+		counter_queue.task_done()  # this unlocks the queue
+
+
+# printer_manager and increment_manager run continuously because of the `daemon` flag.
+Thread(target=increment_manager, daemon=True).start()
+
+
+
+def printer_manager():
+	while True:
+		for line in job_queue.get():
+			time.sleep(random.random())
+			print(line)
+		job_queue.task_done()
+
+# printer_manager and increment_manager run continuously because of the `daemon` flag.
+Thread(target=printer_manager, daemon=True).start()
+
+
+def increment_counter():
+	counter_queue.put(1) 
+	time.sleep(random.random())
+
+
+worker_threads = [Thread(target=increment_counter) for thread in range(10)]
+
+for thread in worker_threads:
+	time.sleep(random.random())
+	thread.start()
+
+for thread in worker_threads:
+	thread.join()  # wait for it to finish
+
+counter_queue.join()  # wait for counter_queue to be empty
+job_queue.join()  # wait for job_queue to be empty
+
+
+
+
+USING PYTHON GENERATORS INSTEAD OF THREADS
+
+
+def countdown(n):
+    while n > 0:
+        yield n
+        n -= 1
+
+
+tasks = [countdown(10), countdown(5), countdown(20)]
+
+while tasks:
+    task = tasks[0]
+    tasks.remove(task)
+    try:
+        x = next(task)
+        print(x)
+        tasks.append(task)
+    except StopIteration:
+        print('Task finished')
+
+
+
+
+YIELDING FROM ANOTHER ITERATOR
+
+
+from collections import deque
+
+friends = deque(('Rolf', 'Jose', 'Charlie', 'Jen', 'Anna'))
+
+
+def get_friend():
+    yield from friends
+
+
+def greet(g):
+    while True:
+        try:
+            friend = next(g)
+            yield f'HELLO {friend}'
+        except StopIteration:
+            pass
+
+
+friends_generator = get_friend()
+g = greet(friends_generator)
+print(next(g))
+print(next(g))
+
+
+
+
+RECEIVING DATA THROUGH YIELD
+
+
+from collections import deque
+
+friends = deque(('Rolf', 'Jose', 'Charlie', 'Jen', 'Anna'))
+
+
+def friend_upper():
+    while friends:
+        friend = friends.popleft().upper()
+        greeting = yield
+        print(f'{greeting} {friend}')
+
+
+def greet(g):
+    yield from g
+
+
+greeter = greet(friend_upper())
+greeter.send(None)
+greeter.send('Hello')
+print('Hello, world! Multitasking...')
+greeter.send('How are you,')
+
+
+
+
+
+USING THE ASYNC AND AWAIT KEYWORDS
+
+
+from collections import deque
+from types import coroutine
+
+friends = deque(('Rolf', 'Jose', 'Charlie', 'Jen', 'Anna'))
+
+
+@coroutine
+def friend_upper():
+    while friends:
+        friend = friends.popleft().upper()
+        greeting = yield
+        print(f'{greeting} {friend}')
+
+
+async def greet(g):
+    print('Starting...')
+    await g
+    print('Ending...')
+
+
+greeter = greet(friend_upper())
+greeter.send(None)
+greeter.send('Hello')
+
+greeting = input('Enter a greeting: ')
+greeter.send(greeting)
+
+greeting = input('Enter a greeting: ')
+greeter.send(greeting)
+
+
+
+
+
+PYTHON SINGLE ASYNC REQUEST
+
+
+import aiohttp
+import asyncio
+
+async def fetch_page(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            print(response.status)
+            return response.status
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(fetch_page('http://google.com'))
+
+
+
+
+
+
+PYTHON MULTIPLE ASYNC REQUESTS
+
+
+
+import asyncio
+import aiohttp
+import async_timeout
+import time
+
+async def fetch_page(session, url):
+    async with async_timeout.timeout(10):
+        start = time.time()
+        async with session.get(url) as response:
+            print(f'{url} took {time.time() - start}')
+            return response.status
+
+
+async def get_multiple_pages(loop, *urls):
+    tasks = []
+    async with aiohttp.ClientSession(loop=loop) as session:
+        for url in urls:
+            tasks.append(fetch_page(session, url))
+        return await asyncio.gather(*tasks)
+
+
+if __name__ == '__main__':
+
+    def main():
+        loop = asyncio.get_event_loop()
+        urls = [
+            'http://google.com',
+            'http://example.com',
+            'http://tecladocode.com/blog'
+        ]
+        start = time.time()
+        pages = loop.run_until_complete(get_multiple_pages(loop, *urls))
+        print(f'Total took {time.time() - start}')
+        for page in pages:
+            print(page)
+
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+INTERACTING WITH API'S IN PYTHON
+
+
+import requests
+
+APP_ID = "72dba35060b54cf9ad3ffbdc68de9174"
+ENDPOINT = "https://openexchangerates.org/api/latest.json"
+
+response = requests.get(f"{ENDPOINT}?app_id={APP_ID}")
+exchange_rates = response.json()
+
+usd_amount = 1000
+gbp_amount = usd_amount * exchange_rates['rates']['GBP']
+
+print(f"USD{usd_amount} is GBP{gbp_amount}")
+
+
+
+
+import requests
+import functools
+
+
+class OpenExchangeClient:
+    BASE_URL = "https://openexchangerates.org/api/"
+
+    def __init__(self, app_id):
+        self.app_id = app_id
+    
+    @property
+    def latest(self):
+        return requests.get(f"{self.BASE_URL}/latest.json?app_id={self.app_id}").json()
+    
+    def convert(self, from_amount, from_currency, to_currency):
+        rates = self.latest['rates']
+        to_rate = rates[to_currency]
+
+        if from_currency == 'USD':
+            return from_amount * to_rate
+        else:
+            from_in_usd = from_amount / rates[from_currency]
+            return from_in_usd * to_rate
+
+
+
+
+
+
+
+
+
+
+USING TKINTER
+
+
+import tkinter as tk
+from tkinter import ttk
+
+
+def greet():
+    print("Hello, World!")
+
+
+root = tk.Tk()
+root.title("Hello")
+
+greet_button = ttk.Button(root, text="Greet", command=greet)
+greet_button.pack(side="left", fill="x", expand=True)
+
+quit_button = ttk.Button(root, text="Quit", command=root.destroy)
+quit_button.pack(side="left", fill="x", expand=True)  # could use side="right"
+
+root.mainloop()
+
+
+
+
+
+import tkinter as tk
+from tkinter import ttk
+
+
+def greet():
+    print("Hello, World!")
+
+
+root = tk.Tk()
+root.title("Hello")
+
+greet_button = ttk.Button(root, text="Greet", command=greet)
+greet_button.pack(side="left", fill="x", expand=True)
+
+quit_button = ttk.Button(root, text="Quit", command=root.destroy)
+quit_button.pack(side="left", fill="x", expand=True)  # could use side="right"
+
+root.mainloop()
+
+
+
+import tkinter as tk
+from tkinter import ttk
+
+
+def greet():
+    # The get() method is used to fetch the value of a StringVar() instance.
+    # If user_name is empty, print Hello, World!
+    print(f"Hello, {user_name.get() or 'World'}!")
+
+
+root = tk.Tk()
+root.title("Greeter")
+
+# Here we create an instances of the StringVar() class, which is to track the content of widgets
+user_name = tk.StringVar()
+
+
+name_label = ttk.Label(root, text="Name: ")
+name_label.pack(side="left", padx=(0, 10))
+name_entry = ttk.Entry(root, width=15, textvariable=user_name)
+name_entry.pack(side="left")
+name_entry.focus()
+
+greet_button = ttk.Button(root, text="Greet", command=greet)
+greet_button.pack(side="left", fill="x", expand=True)
+
+root.mainloop()
+
+
+
+PACKING COMPONENTS IN TKINTER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
