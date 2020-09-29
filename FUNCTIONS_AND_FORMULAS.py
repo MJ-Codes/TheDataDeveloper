@@ -9,6 +9,11 @@ Created on Sat Aug 22 15:48:32 2020
 
 '''
 
+
+
+
+
+
 import sympy
 sympy.init_printing()
 
@@ -92,11 +97,6 @@ def pearson_r(x,y):
     # Return entry [0,1]
     return corr_mat[0,1]
 
-# Compute Pearson correlation coefficient for I. versicolor: r
-r = pearson_r(versicolor_petal_length,versicolor_petal_width)
-
-# Print the result
-print(r)
 
 
 
@@ -168,6 +168,29 @@ def draw_bs_reps(data, func, size=1):
 
 
 
+
+PAIRS BOOTSTRAP FOR A SINGLE STATISTIC
+
+def draw_bs_pairs(x, y, func, size=1):
+    """Perform pairs bootstrap for a single statistic."""
+
+    # Set up array of indices to sample from: inds
+    inds = np.arange(len(x))
+
+    # Initialize replicates: bs_replicates
+    bs_replicates = np.empty(size)
+
+    # Generate replicates
+    for i in range(size):
+        bs_inds = np.random.choice(inds, len(inds))
+        bs_x, bs_y = x[bs_inds], y[bs_inds]
+        bs_replicates[i] = func(bs_x, bs_y)
+
+    return bs_replicates
+
+
+
+
 PAIRS BOOTSTRAP FOR LINEAR REGRESSION
 
 def draw_bs_pairs_linreg(x, y, size=1):
@@ -231,6 +254,157 @@ def draw_perm_reps(data_1, data_2, func, size=1):
     return perm_replicates
 
 '''
+
+
+
+TRANSLATION OF A ONE-SAMPLE BOOTSTRAP HYPOTHESIS TEST
+
+translated_force_a = force_a - np.mean(force_a)  + np.mean(force_b)
+
+
+
+TRANSLATION OF A TWO-SAMPLE BOOTSTRAP HYPOTHESIS TEST
+
+# Compute mean of all forces: mean_force
+mean_force = np.mean(forces_concat)
+
+# Generate shifted arrays
+force_a_shifted = force_a - np.mean(force_a) + mean_force
+force_b_shifted = force_b - np.mean(force_b) + mean_force
+
+
+
+
+PRIME NUMBER GENERATOR
+
+def prnum_checker(num):
+# prime numbers are greater than 1
+    if num > 1:
+       # check for factors
+       for i in range(2,num):
+           if (num % i) == 0:
+               print(num,"is not a prime number")
+               print(i,"times",num//i,"is",num)
+               break
+       else:
+           print(num,"is a prime number")
+       
+    # if input number is less than
+    # or equal to 1, it is not prime
+    else:
+       print(num,"is not a prime number")
+
+
+
+
+
+SORTING FUNCTION
+
+
+SELECTION SORT
+
+def sortie(to_be_sorted):
+       
+    
+    for i in range(len(to_be_sorted)):
+        smallest = to_be_sorted[i]
+        index = smallest + 1
+        if index < smallest:
+            smallest = index
+    return smallest
+
+
+
+
+
+MERGE SORT
+
+def merge_sort(arr, begin, end):
+    if end - begin > 1:
+        middle = (begin + end)//2
+        merge_sort(arr, begin, middle)
+        merge_sort(arr, middle, end)
+        merge_list(arr, begin, middle, end)
+ 
+def merge_list(arr, begin, middle, end):
+    left = arr[begin:middle]
+    right = arr[middle:end]
+    k = begin
+    i = 0
+    j = 0
+    while (begin + i < middle and middle + j < end):
+        if (left[i] <= right[j]):
+            arr[k] = left[i]
+            i = i + 1
+        else:
+            arr[k] = right[j]
+            j = j + 1
+        k = k + 1
+    if begin + i < middle:
+        while k < end:
+            arr[k] = left[i]
+            i = i + 1
+            k = k + 1
+    else:
+        while k < end:
+            arr[k] = right[j]
+            j = j + 1
+            k = k + 1
+ 
+ 
+arr = input('Enter the list of numbers: ').split()
+arr = [int(x) for x in arr]
+merge_sort(arr, 0, len(arr))
+print('Sorted list: ', end='')
+print(arr)
+
+
+
+
+BUBBLE SORT
+
+def bubble_sort(nums):
+    # We set swapped to True so the loop looks runs at least once
+    swapped = True
+    while swapped:
+        swapped = False
+        for i in range(len(nums) - 1):
+            if nums[i] > nums[i + 1]:
+                # Swap the elements
+                nums[i], nums[i + 1] = nums[i + 1], nums[i]
+                # Set the flag to True so we'll loop again
+                swapped = True
+
+
+# Verify it works
+random_list_of_nums = [5, 2, 1, 8, 4]
+bubble_sort(random_list_of_nums)
+print(random_list_of_nums)
+
+
+
+
+INSERTION SORT
+
+def insertion_sort(nums):
+    # Start on the second element as we assume the first element is sorted
+    for i in range(1, len(nums)):
+        item_to_insert = nums[i]
+        # And keep a reference of the index of the previous element
+        j = i - 1
+        # Move all items of the sorted segment forward if they are larger than
+        # the item to insert
+        while j >= 0 and nums[j] > item_to_insert:
+            nums[j + 1] = nums[j]
+            j -= 1
+        # Insert the item
+        nums[j + 1] = item_to_insert
+
+
+# Verify it works
+random_list_of_nums = [9, 1, 15, 28, 6]
+insertion_sort(random_list_of_nums)
+print(random_list_of_nums)
 
 
 

@@ -557,7 +557,7 @@ The subquery is known as a correlated because the subquery is related to the out
 
 SELECT 
 	-- Select country ID, date, home, and away goals from match
-	main.country_id,
+    main.country_id,
     main.date,
     main.home_goal, 
     main.away_goal
@@ -799,7 +799,7 @@ a value for each row in the window
 #Note the Group By clause is not necessary for the simple OVER CLAUSE
 SELECT 
 	-- Select the id, country name, season, home, and away goals
-	m.id, 
+    m.id, 
     c.name AS country, 
     m.season,
 	m.home_goal,
@@ -922,7 +922,7 @@ WHERE
 MORE EXAMPLES OF CASE STATEMENTS, SUBQUERIES, CTE`S, AND WINDOW FUNCTIONS
 
 SELECT 
-    m.id, 
+        m.id, 
 	t.team_long_name,
     -- Identify matches as home/away wins or ties
 	CASE WHEN m.home_goal > m.away_goal THEN 'MU Win'
@@ -939,7 +939,7 @@ WHERE
     
     
 SELECT 
-	m.id, 
+    m.id, 
     t.team_long_name,
     -- Identify matches as home/away wins or ties
 	CASE WHEN m.away_goal < m.home_goal THEN 'MU Loss'

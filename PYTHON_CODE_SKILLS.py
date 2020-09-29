@@ -2709,32 +2709,6 @@ print(repr(metadata.tables['data']))
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GENERATORS IN PYTHON
 
 def hundred_numbers():
@@ -3246,11 +3220,7 @@ print(movie or 'No movies found.')
     
     
 
-
-
-
-
-    
+   
     
     
 USING CLASS METHOD FOR UNPACKING VALUES
@@ -4648,25 +4618,6 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 INTERACTING WITH API'S IN PYTHON
 
 
@@ -4685,7 +4636,7 @@ print(f"USD{usd_amount} is GBP{gbp_amount}")
 
 
 
-
+CREATING A SEPARATE CLIENT FILE FOR API CUSTOMIZATION
 import requests
 import functools
 
@@ -4713,7 +4664,568 @@ class OpenExchangeClient:
 
 
 
+from libs.openexchange import OpenExchangeClient
 
+APP_ID = "72dba35060b54cf9ad3ffbdc68de9174"
+
+client = OpenExchangeClient(APP_ID)
+
+usd_amount = 1000
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+
+print(f"USD{usd_amount} is GBP{gbp_amount}")
+
+
+
+
+
+
+USING CACHETOOLS FOR MORE SPEED
+
+import requests
+from cachetools import cached, TTLCache
+
+
+class OpenExchangeClient:
+    BASE_URL = "https://openexchangerates.org/api/"
+
+    def __init__(self, app_id):
+        self.app_id = app_id
+    
+    @property
+    @cached(cache=TTLCache(maxsize=2, ttl=900))
+    def latest(self):
+        return requests.get(f"{self.BASE_URL}/latest.json?app_id={self.app_id}").json()
+    
+    def convert(self, from_amount, from_currency, to_currency):
+        rates = self.latest['rates']
+        to_rate = rates[to_currency]
+
+        if from_currency == 'USD':
+            return from_amount * to_rate
+        else:
+            from_in_usd = from_amount / rates[from_currency]
+            return from_in_usd * to_rate
+
+
+
+
+from libs.openexchange import OpenExchangeClient
+import time
+
+
+
+APP_ID = "72dba35060b54cf9ad3ffbdc68de9174"
+
+client = OpenExchangeClient(APP_ID)
+
+usd_amount = 1000
+start = time.time()
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+print(f'First call took {time.time() - start} seconds.')
+
+start = time.time()
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+gbp_amount = client.convert(usd_amount, 'USD', 'GBP')
+print(f'After, 10 calls took {time.time() - start} seconds.')
+
+print(f"USD{usd_amount} is GBP{gbp_amount}")
+
+
+
+
+
+WORKING WITH DECORATORS
+
+
+user = {'username': 'jose123', 'access_level': 'admin'}
+
+def user_has_permission(func): #The Decorator takes in a function,  and returns a function 
+    def secure_func():          that returns the original function   
+        if user.get('access_level') == 'admin':
+            return func()
+    return secure_func
+    
+def my_function():
+    return 'Password for admin panel is 1234.'
+
+my_secure_function = user_has_permission(my_function)
+
+print(my_secure_function())
+
+
+
+
+USING THE @ SYNTAX
+
+
+user = {'username': 'jose123', 'access_level': 'guest'}
+
+
+def user_has_permission(func):
+    def secure_func():
+        if user.get('access_level') == 'admin':
+            return func()
+    return secure_func
+
+@user_has_permission
+def my_function():
+    """
+    Allows us to retrieve the password for the admin panel.
+    """
+    return 'Password for admin panel is 1234.'
+
+
+@user_has_permission
+def another():
+    pass
+
+print(my_function.__name__)
+print(another.__name__)
+
+
+
+USING FUNCTOOLS WRAPS
+
+import functools
+
+user = {'username': 'jose123', 'access_level': 'guest'}
+
+
+def user_has_permission(func):
+    @functools.wraps(func)
+    def secure_func():
+        if user.get('access_level') == 'admin':
+            return func()
+    return secure_func
+
+@user_has_permission
+def my_function():
+    """
+    Allows us to retrieve the password for the admin panel.
+    """
+    return 'Password for admin panel is 1234.'
+
+
+@user_has_permission
+def another():
+    pass
+
+print(my_function.__name__)
+print(another.__name__)
+
+
+
+DECORATORS FUNCTIONS WITH PARAMETERS
+
+import functools
+
+user = {'username': 'jose123', 'access_level': 'admin'}
+
+
+def user_has_permission(func):
+    @functools.wraps(func)
+    def secure_func(panel):
+        if user.get('access_level') == 'admin':
+            return func(panel)
+    return secure_func
+
+@user_has_permission
+def my_function(panel):
+    """
+    Allows us to retrieve the password for the admin panel.
+    """
+    return f'Password for {panel} panel is 1234.'
+
+
+print(my_function.__name__)
+
+print(my_function('movies'))
+
+
+
+
+DECORATORS WITH PARAMETERS
+
+import functools
+
+user = {'username': 'jose123', 'access_level': 'user'}
+
+
+def user_has_permission(access_level):
+    def my_decorator(func):
+        @functools.wraps(func)
+        def secure_func(panel):
+            if user.get('access_level') == access_level:
+                return func(panel)
+        return secure_func
+    return my_decorator
+
+
+@user_has_permission('user')
+def my_function(panel):
+    """
+    Allows us to retrieve the password for the admin panel.
+    """
+    return f'Password for {panel} panel is 1234.'
+
+
+print(my_function.__name__)
+print(my_function('movies'))
+
+
+
+
+FUNCTIONS THAT ACCEPT MULTIPLE ARGUMENTS
+
+def add_all(*args):
+    return sum(args)
+
+
+def pretty_print(**kwargs):
+    for k, v in kwargs.items():
+        print(f'For {k} we have {v}.')
+
+
+pretty_print(**{'username': 'jose123', 'access_level': 'admin'})
+
+
+
+
+GENERIC DECORATORS FOR ANY FUNCTION
+ 
+
+import functools
+
+user = {'username': 'jose123', 'access_level': 'admin'}
+
+
+def user_has_permission(func):
+    @functools.wraps(func)
+    def secure_func(*args, **kwargs):
+        if user.get('access_level') == 'admin':
+            return func(*args, **kwargs)
+    return secure_func
+
+@user_has_permission
+def my_function(panel):
+    """
+    Allows us to retrieve the password for the admin panel.
+    """
+    return f'Password for {panel} panel is 1234.'
+
+
+@user_has_permission
+def another():
+    pass
+
+
+print(my_function.__name__)
+
+print(my_function('movies'))
+print(another())
+
+
+
+MULTIPLE INHERITANCE
+
+
+from user import User
+from saveable import Saveable
+
+class Admin(User, Saveable):
+    def __init__(self, username, password, access):
+        super(Admin, self).__init__(username, password)
+        self.access = access
+    
+    def __repr__(self):
+        return f'<Admin {self.username}, access {self.access}>'
+
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'password': self.password,
+            'access': self.access
+        }
+
+
+from database import Database
+from admin import Admin
+
+a = Admin('paco', 'perez', 2)
+b = Admin('rolf', 'smith', 1)
+
+a.save()
+b.save()
+
+user = Database.find(lambda x: x['username'] == 'paco')[0]
+user_obj = Admin(**user)
+print(user_obj.username)
+
+
+
+class Database:
+    content = {'users': []}
+
+    @classmethod
+    def insert(cls, data):
+        cls.content['users'].append(data)
+    
+    @classmethod
+    def remove(cls, finder):
+        cls.content['users'] = [user for user in cls.content['users'] if not finder(user)]
+    
+    @classmethod
+    def find(cls, finder):
+        return [user for user in cls.content['users'] if finder(user)]
+
+
+from database import Database
+
+class Saveable:
+    def save(self):
+        Database.insert(self.to_dict())
+
+
+class User:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+    
+    def login(self):
+        return 'Logged in!'
+    
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+
+
+ABSTRACT BASE CLASSES
+
+
+from abc import ABCMeta, abstractmethod
+
+class Animal(metaclass=ABCMeta):
+    def walk(self):
+        print('Walking...')
+    
+    def eat(self):
+        print('Eating...')
+    
+    @abstractmethod
+    def num_legs():
+        pass
+
+
+from animal import Animal
+from dog import Dog
+
+d = Dog('Bob')
+# a = Animal()
+
+d.walk()
+
+
+from animal import Animal
+
+
+class Dog(Animal):
+    def __init__(self, name):
+        self.name = name
+    
+    def num_legs(self):
+        return 4
+
+
+
+ABSTRACT BASE CLASSES AND INTERFACES
+
+from user import User
+
+class Admin(User):
+    def __init__(self, username, password, access):
+        super(Admin, self).__init__(username, password)
+        self.access = access
+    
+    def __repr__(self):
+        return f'<Admin {self.username}, access {self.access}>'
+
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'password': self.password,
+            'access': self.access
+        }
+
+
+
+from database import Database
+from admin import Admin
+from user import User
+from saveable import Saveable
+
+a = Admin('paco', 'perez', 2)
+b = Admin('rolf', 'smith', 1)
+
+a.save()
+b.save()
+
+user = Database.find(lambda x: x['username'] == 'paco')[0]
+user_obj = Admin(**user)
+print(user_obj.username)
+
+print(isinstance(user_obj, Saveable))  # This is True because it's a subclass
+
+# You can do things like these without worry:
+
+users_to_save = [a, b, User('jose', '1234')]
+for u in users_to_save:
+    u.save()  # This is fine, because all users (Admin and User) implement the Saveable interface so we know they have a .save() method
+
+
+
+class Database:
+    content = {'users': []}
+
+    @classmethod
+    def insert(cls, data):
+        cls.content['users'].append(data)
+    
+    @classmethod
+    def remove(cls, finder):
+        cls.content['users'] = [user for user in cls.content['users'] if not finder(user)]
+    
+    @classmethod
+    def find(cls, finder):
+        return [user for user in cls.content['users'] if finder(user)]
+
+
+from abc import ABCMeta, abstractmethod
+
+from database import Database
+
+class Saveable(metaclass=ABCMeta):
+    def save(self):
+        Database.insert(self.to_dict())
+    
+    # @classmethod (or @staticmethod, or @property)
+    @abstractmethod  # @abstractmethod must always be the innermost decorator if used in conjunction with other decorators.
+    def to_dict():
+        pass
+
+
+from saveable import Saveable
+
+class User(Saveable):
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+    
+    def login(self):
+        return 'Logged in!'
+    
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'password': self.password
+        }
+
+
+
+
+PYTHON'S PROPERTY SETTER
+
+CODE WITHOUT PROPERTY SETTER
+
+
+from typing import List
+
+class Segment:
+    def __init__(self, departure, destination):
+        self.departure = departure
+        self.destination = destination
+
+
+
+class Flight:
+    def __init__(self, segments: List[Segment]):
+        self.segments = segments
+        
+    
+    @property
+    def departure_point(self):
+        return self.segments[0].departure
+    
+   
+
+flight = Flight([Segment('GLA', 'LHR')])
+print(flight.departure_point)
+flight.segments[0].departure = 'EDI'
+print(flight.departure_point)
+
+
+
+CODE WITH PROPERTY SETTER
+
+
+class Flight:
+    def __init__(self, segments):
+        """
+        Creates a new Flight wrapper object from an arbitrary number of segments.
+        :param segments: a list of segments in this flight—normally just one.
+        """
+        self.segments = segments
+    
+    def __repr__(self):
+        stops = [self.segments[0].departure, self.segments[0].destination]
+        for seg in self.segments[1:]:
+            stops.append(seg.destination)
+        
+        return ' -> '.join(stops)
+    
+    @property
+    def departure_point(self):
+        return self.segments[0].departure
+    
+    @departure_point.setter
+    def departure_point(self, val):
+        dest = self.segments[0].destination
+        self.segments[0] = Segment(departure=val, destination=dest)
+    
+
+class Segment:
+    def __init__(self, departure, destination):
+        self.departure = departure
+        self.destination = destination
+
+
+
+from flight import Segment, Flight
+
+
+seg = [Segment('EDI', 'LHR'), Segment('LHR', 'CAN')]
+flight = Flight(seg)
+print(repr(flight))
+
+print(flight.departure_point)
+print(flight)
+
+flight.departure_point = 'GLA'
+print('...Set departure to GLA...')
+
+print(flight.departure_point)
+print(flight)
 
 
 
@@ -4800,17 +5312,1562 @@ PACKING COMPONENTS IN TKINTER
 
 
 
+import tkinter as tk
+
+# -- Aligning with `side` ---
+
+root = tk.Tk()
+
+tk.Label(root, text="Label 1", bg="green").pack(side="left")
+tk.Label(root, text="Label 2", bg="red").pack(side="top")
+
+root.mainloop()
+
+# -- Filling in one direction --
+
+root = tk.Tk()
+
+tk.Label(root, text="Label 1", bg="green").pack(side="left", fill="y")
+tk.Label(root, text="Label 2", bg="red").pack(side="top", fill="x")
+
+root.mainloop()
+
+# -- Filling in both directions --
+
+root = tk.Tk()
+
+tk.Label(root, text="Label 1", bg="green").pack(side="left", fill="both")
+tk.Label(root, text="Label 2", bg="red").pack(side="top", fill="both")
+
+root.mainloop()
+
+
+# -- Even if either label doesn't fill --
+
+root = tk.Tk()
+
+tk.Label(root, text="Label 1", bg="green").pack(side="left")
+tk.Label(root, text="Label 2", bg="red").pack(side="top", fill="both")
+
+root.mainloop()
+
+
+root = tk.Tk()
+
+tk.Label(root, text="Label 1", bg="green").pack(side="left", fill="both")
+tk.Label(root, text="Label 2", bg="red").pack(side="top")
+
+root.mainloop()
+
+# -- expand can make it grow as much as possible. It won't hide other widgets, but other widgets will be compressed --
+
+root = tk.Tk()
+
+tk.Label(root, text="Label 1", bg="green").pack(side="left", expand=True, fill="both")
+tk.Label(root, text="Label 2", bg="red").pack(side="top")
+
+root.mainloop()
+
+
+# -- expanding two widgets means they share the available space evenly --
+
+root = tk.Tk()
+
+tk.Label(root, text="Label 2", bg="red").pack(side="top", expand=True, fill="both")
+tk.Label(root, text="Label 2", bg="red").pack(side="top", expand=True, fill="both")
+
+root.mainloop()
+
+
+# -- whichever side comes first gets expansion priority --
+
+root = tk.Tk()
+
+tk.Label(root, text="Label left", bg="green").pack(
+    side="left", expand=True, fill="both"
+)
+tk.Label(root, text="Label top", bg="red").pack(side="top", expand=True, fill="both")
+tk.Label(root, text="Label top", bg="red").pack(side="top", expand=True, fill="both")
+
+root.mainloop()
+
+root = tk.Tk()
+
+tk.Label(root, text="Label top", bg="red").pack(side="top", expand=True, fill="both")
+tk.Label(root, text="Label top", bg="red").pack(side="top", expand=True, fill="both")
+tk.Label(root, text="Label left", bg="green").pack(
+    side="left", expand=True, fill="both"
+)
+
+root.mainloop()
+
+
+
+
+#creating a frame inside the root
+
+import tkinter as tk
+from tkinter import ttk
+
+root = tk.Tk()
+
+main = ttk.Frame(root)
+main.pack(side="left", fill="both", expand=True)
+
+tk.Label(main, text="Label top", bg="red").pack(side="left", fill="both", expand=True)
+tk.Label(main, text="Label top", bg="red").pack(side="left", fill="both", expand=True)
+
+tk.Label(root, text="Label left", bg="green").pack(side="left", fill="both", expand=True)
+
+root.mainloop()
+
+
+
+
+CREATING A TKINTER NOTEBOOK
+
+import tkinter as tk
+from tkinter import ttk
+
+
+def create_file():
+    text_area = tk.Text(notebook)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text="Untitled")
+    notebook.select(text_area)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.mainloop()
+
+
+
+
+ADDING A MENU
+
+import tkinter as tk
+from tkinter import ttk
+
+
+def create_file():
+    text_area = tk.Text(notebook)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text="Untitled")
+    notebook.select(text_area)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+
+file_menu.add_command(label="New", command=create_file)
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.mainloop()
+
+
+
+SAVING FILES
+
+import tkinter as tk
+from tkinter import ttk, filedialog
+
+
+def create_file():
+    text_area = tk.Text(notebook)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text="Untitled")
+    notebook.select(text_area)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = root.nametowidget(notebook.select())
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+
+file_menu.add_command(label="New", command=create_file)
+file_menu.add_command(label="Save", command=save_file)
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.mainloop()
+
+
+
+OPENING FILES
+
+import tkinter as tk
+from tkinter import ttk, filedialog
+
+
+def create_file(content="", title="Untitled"):
+    text_area = tk.Text(notebook)
+    text_area.insert("end", content)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text=title)
+    notebook.select(text_area)
+
+
+def open_file():
+    file_path = filedialog.askopenfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+
+        with open(file_path, "r") as file:
+            content = file.read()
+
+    except (AttributeError, FileNotFoundError):
+        print("Open operation cancelled")
+        return
+
+    create_file(content, filename)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = root.nametowidget(notebook.select())
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+
+file_menu.add_command(label="New", command=create_file)
+file_menu.add_command(label="Open...", command=open_file)
+file_menu.add_command(label="Save", command=save_file)
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.mainloop()
+
+
+
+BINDING SHORTCUTS
+
+import tkinter as tk
+from tkinter import ttk, filedialog
+
+
+def create_file(content="", title="Untitled"):
+    text_area = tk.Text(notebook)
+    text_area.insert("end", content)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text=title)
+    notebook.select(text_area)
+
+
+def open_file():
+    file_path = filedialog.askopenfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+
+        with open(file_path, "r") as file:
+            content = file.read()
+
+    except (AttributeError, FileNotFoundError):
+        print("Open operation cancelled")
+        return
+
+    create_file(content, filename)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = root.nametowidget(notebook.select())
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+
+file_menu.add_command(label="New", command=create_file, accelerator="Ctrl+N")
+file_menu.add_command(label="Open...", command=open_file, accelerator="Ctrl+O")
+file_menu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.bind("<Control-n>", lambda event: create_file())
+root.bind("<Control-o>", lambda event: open_file())
+root.bind("<Control-s>", lambda event: save_file())
+
+root.mainloop()
+
+
+
+CHECKING UNSAVED CHANGES
+
+import tkinter as tk
+from tkinter import ttk, filedialog
+
+text_contents = dict()
+
+
+def check_for_changes():
+    current = get_text_widget()
+    content = current.get("1.0", "end-1c")
+    name = notebook.tab("current")["text"]
+
+    if hash(content) != text_contents[str(current)]:
+        if name[-1] != "*":
+            notebook.tab("current", text=name + "*")
+    elif name[-1] == "*":
+        notebook.tab("current", text=name[:-1])
+
+
+def get_text_widget():
+    text_widget = notebook.nametowidget(notebook.select())
+
+    return text_widget
+
+
+def create_file(content="", title="Untitled"):
+    text_area = tk.Text(notebook)
+    text_area.insert("end", content)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text=title)
+    notebook.select(text_area)
+
+    text_contents[str(text_area)] = hash(content)
+
+
+def open_file():
+    file_path = filedialog.askopenfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+
+        with open(file_path, "r") as file:
+            content = file.read()
+
+    except (AttributeError, FileNotFoundError):
+        print("Open operation cancelled")
+        return
+
+    create_file(content, filename)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = get_text_widget()
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+    text_contents[str(text_widget)] = hash(content)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+
+file_menu.add_command(label="New", command=create_file, accelerator="Ctrl+N")
+file_menu.add_command(label="Open...", command=open_file, accelerator="Ctrl+O")
+file_menu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.bind("<KeyPress>", lambda event: check_for_changes())
+root.bind("<Control-n>", lambda event: create_file())
+root.bind("<Control-o>", lambda event: open_file())
+root.bind("<Control-s>", lambda event: save_file())
+
+root.mainloop()
+
+
+
+CONFIRM EXIT WITH UNSAVED CHANGES
+
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+text_contents = dict()
+
+
+def check_for_changes():
+    current = get_text_widget()
+    content = current.get("1.0", "end-1c")
+    name = notebook.tab("current")["text"]
+
+    if hash(content) != text_contents[str(current)]:
+        if name[-1] != "*":
+            notebook.tab("current", text=name + "*")
+    elif name[-1] == "*":
+        notebook.tab("current", text=name[:-1])
+
+
+def get_text_widget():
+    text_widget = notebook.nametowidget(notebook.select())
+
+    return text_widget
+
+
+def confirm_quit():
+    unsaved = False
+
+    for tab in notebook.tabs():
+        text_widget = root.nametowidget(tab)
+        content = text_widget.get("1.0", "end-1c")
+
+        if hash(content) != text_contents[str(text_widget)]:
+            unsaved = True
+            break
+
+    if unsaved:
+        confirm = messagebox.askyesno(
+            message="You have unsaved changes. Are you sure you want to quit?",
+            icon="question",
+            title="Confirm Quit",
+        )
+
+        if not confirm:
+            return
+
+    root.destroy()
+
+
+def create_file(content="", title="Untitled"):
+    text_area = tk.Text(notebook)
+    text_area.insert("end", content)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text=title)
+    notebook.select(text_area)
+
+    text_contents[str(text_area)] = hash(content)
+
+
+def open_file():
+    file_path = filedialog.askopenfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+
+        with open(file_path, "r") as file:
+            content = file.read()
+
+    except (AttributeError, FileNotFoundError):
+        print("Open operation cancelled")
+        return
+
+    create_file(content, filename)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = get_text_widget()
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+    text_contents[str(text_widget)] = hash(content)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+
+file_menu.add_command(label="New", command=create_file, accelerator="Ctrl+N")
+file_menu.add_command(label="Open...", command=open_file, accelerator="Ctrl+O")
+file_menu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
+file_menu.add_command(label="Exit", command=confirm_quit)
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.bind("<KeyPress>", lambda event: check_for_changes())
+root.bind("<Control-n>", lambda event: create_file())
+root.bind("<Control-o>", lambda event: open_file())
+root.bind("<Control-s>", lambda event: save_file())
+
+root.mainloop()
+
+
+
+CLOSING INDIVIDUAL TABS
+
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+text_contents = dict()
+
+
+def check_for_changes():
+    current = get_text_widget()
+    content = current.get("1.0", "end-1c")
+    name = notebook.tab("current")["text"]
+
+    if hash(content) != text_contents[str(current)]:
+        if name[-1] != "*":
+            notebook.tab("current", text=name + "*")
+    elif name[-1] == "*":
+        notebook.tab("current", text=name[:-1])
+
+
+def get_text_widget():
+    text_widget = notebook.nametowidget(notebook.select())
+
+    return text_widget
+
+
+def close_current_tab():
+    current = get_text_widget()
+    if current_tab_unsaved() and not confirm_close():
+        return
+
+    if len(notebook.tabs()) == 1:
+        create_file()
+
+    notebook.forget(current)
+
+
+def current_tab_unsaved():
+    current_tab_name = notebook.tab("current")["text"]
+    return current_tab_name[-1] == "*"
+
+
+def confirm_close():
+    return messagebox.askyesno(
+        message="You have unsaved changes. Are you sure you want to close?",
+        icon="question",
+        title="Unsaved changes",
+    )
+
+
+def confirm_quit():
+    unsaved = False
+
+    for tab in notebook.tabs():
+        text_widget = root.nametowidget(tab)
+        content = text_widget.get("1.0", "end-1c")
+
+        if hash(content) != text_contents[str(text_widget)]:
+            unsaved = True
+            break
+
+    if unsaved and not confirm_close():
+        return
+
+    root.destroy()
+
+
+def create_file(content="", title="Untitled"):
+    text_area = tk.Text(notebook)
+    text_area.insert("end", content)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text=title)
+    notebook.select(text_area)
+
+    text_contents[str(text_area)] = hash(content)
+
+
+def open_file():
+    file_path = filedialog.askopenfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+
+        with open(file_path, "r") as file:
+            content = file.read()
+
+    except (AttributeError, FileNotFoundError):
+        print("Open operation cancelled")
+        return
+
+    create_file(content, filename)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = get_text_widget()
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+    text_contents[str(text_widget)] = hash(content)
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+
+file_menu.add_command(label="New", command=create_file, accelerator="Ctrl+N")
+file_menu.add_command(label="Open...", command=open_file, accelerator="Ctrl+O")
+file_menu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
+file_menu.add_command(
+    label="Close Tab", command=close_current_tab, accelerator="Ctrl+Q"
+)
+file_menu.add_command(label="Exit", command=confirm_quit)
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.bind("<KeyPress>", lambda event: check_for_changes())
+root.bind("<Control-n>", lambda event: create_file())
+root.bind("<Control-o>", lambda event: open_file())
+root.bind("<Control-q>", lambda event: close_current_tab())
+root.bind("<Control-s>", lambda event: save_file())
+
+root.mainloop()
+
+
+
+
+ADDING ANOTHER MENU
+
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+text_contents = dict()
+
+
+def check_for_changes():
+    current = get_text_widget()
+    content = current.get("1.0", "end-1c")
+    name = notebook.tab("current")["text"]
+
+    if hash(content) != text_contents[str(current)]:
+        if name[-1] != "*":
+            notebook.tab("current", text=name + "*")
+    elif name[-1] == "*":
+        notebook.tab("current", text=name[:-1])
+
+
+def get_text_widget():
+    text_widget = notebook.nametowidget(notebook.select())
+
+    return text_widget
+
+
+def close_current_tab():
+    current = get_text_widget()
+    if current_tab_unsaved() and not confirm_close():
+        return
+
+    if len(notebook.tabs()) == 1:
+        create_file()
+
+    notebook.forget(current)
+
+
+def current_tab_unsaved():
+    text_widget = get_text_widget()
+    content = text_widget.get("1.0", "end-1c")
+    return hash(content) != text_contents[str(text_widget)]
+
+
+def confirm_close():
+    return messagebox.askyesno(
+        message="You have unsaved changes. Are you sure you want to close?",
+        icon="question",
+        title="Unsaved changes",
+    )
+
+
+def confirm_quit():
+    unsaved = False
+
+    for tab in notebook.tabs():
+        text_widget = root.nametowidget(tab)
+        content = text_widget.get("1.0", "end-1c")
+
+        if hash(content) != text_contents[str(text_widget)]:
+            unsaved = True
+            break
+
+    if unsaved and not confirm_close():
+        return
+
+    root.destroy()
+
+
+def create_file(content="", title="Untitled"):
+    text_area = tk.Text(notebook)
+    text_area.insert("end", content)
+    text_area.pack(fill="both", expand=True)
+
+    notebook.add(text_area, text=title)
+    notebook.select(text_area)
+
+    text_contents[str(text_area)] = hash(content)
+
+
+def open_file():
+    file_path = filedialog.askopenfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+
+        with open(file_path, "r") as file:
+            content = file.read()
+
+    except (AttributeError, FileNotFoundError):
+        print("Open operation cancelled")
+        return
+
+    create_file(content, filename)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = get_text_widget()
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+    text_contents[str(text_widget)] = hash(content)
+
+
+def show_about_info():
+    messagebox.showinfo(
+        title="About",
+        message="The Teclado Text Editor is a simple tabbed text editor designed to help you learn Tkinter!",
+    )
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+help_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+menubar.add_cascade(menu=help_menu, label="Help")
+
+file_menu.add_command(label="New", command=create_file, accelerator="Ctrl+N")
+file_menu.add_command(label="Open...", command=open_file, accelerator="Ctrl+O")
+file_menu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
+file_menu.add_command(
+    label="Close Tab", command=close_current_tab, accelerator="Ctrl+Q"
+)
+file_menu.add_command(label="Exit", command=confirm_quit)
+
+help_menu.add_command(label="About", command=show_about_info)
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.bind("<KeyPress>", lambda event: check_for_changes())
+root.bind("<Control-n>", lambda event: create_file())
+root.bind("<Control-o>", lambda event: open_file())
+root.bind("<Control-q>", lambda event: close_current_tab())
+root.bind("<Control-s>", lambda event: save_file())
+
+root.mainloop()
+
+
+
+
+ADDING PERMANENT SCROLLBAR
+
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+text_contents = dict()
+
+
+def check_for_changes():
+    current = get_text_widget()
+    content = current.get("1.0", "end-1c")
+    name = notebook.tab("current")["text"]
+
+    if hash(content) != text_contents[str(current)]:
+        if name[-1] != "*":
+            notebook.tab("current", text=name + "*")
+    elif name[-1] == "*":
+        notebook.tab("current", text=name[:-1])
+
+
+def get_text_widget():
+    current_tab = notebook.nametowidget(notebook.select())
+    text_widget = current_tab.winfo_children()[0]
+
+    return text_widget
+
+
+def close_current_tab():
+    current = get_text_widget()
+    if current_tab_unsaved() and not confirm_close():
+        return
+
+    if len(notebook.tabs()) == 1:
+        create_file()
+
+    notebook.forget(current)
+
+
+def current_tab_unsaved():
+    text_widget = get_text_widget()
+    content = text_widget.get("1.0", "end-1c")
+    return hash(content) != text_contents[str(text_widget)]
+
+
+def confirm_close():
+    return messagebox.askyesno(
+        message="You have unsaved changes. Are you sure you want to close?",
+        icon="question",
+        title="Unsaved changes",
+    )
+
+
+def confirm_quit():
+    unsaved = False
+
+    for tab in notebook.tabs():
+        tab_widget = root.nametowidget(tab)
+        text_widget = tab_widget.winfo_children()[0]
+        content = text_widget.get("1.0", "end-1c")
+
+        if hash(content) != text_contents[str(text_widget)]:
+            unsaved = True
+            break
+
+    if unsaved and not confirm_close():
+        return
+
+    root.destroy()
+
+
+def create_file(content="", title="Untitled"):
+    container = ttk.Frame(notebook)
+    container.pack()
+
+    text_area = tk.Text(container)
+    text_area.insert("end", content)
+    text_area.pack(side="left", fill="both", expand=True)
+
+    notebook.add(container, text=title)
+    notebook.select(container)
+
+    text_contents[str(text_area)] = hash(content)
+
+    text_scroll = ttk.Scrollbar(container, orient="vertical", command=text_area.yview)
+    text_scroll.pack(side="right", fill="y")
+    text_area["yscrollcommand"] = text_scroll.set
+
+
+def open_file():
+    file_path = filedialog.askopenfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+
+        with open(file_path, "r") as file:
+            content = file.read()
+
+    except (AttributeError, FileNotFoundError):
+        print("Open operation cancelled")
+        return
+
+    create_file(content, filename)
+
+
+def save_file():
+    file_path = filedialog.asksaveasfilename()
+
+    try:
+        filename = file_path.split("/")[-1]
+        text_widget = get_text_widget()
+        content = text_widget.get("1.0", "end-1c")
+
+        with open(file_path, "w") as file:
+            file.write(content)
+
+    except (AttributeError, FileNotFoundError):
+        print("Save operation cancelled")
+        return
+
+    notebook.tab("current", text=filename)
+    text_contents[str(text_widget)] = hash(content)
+
+
+def show_about_info():
+    messagebox.showinfo(
+        title="About",
+        message="The Teclado Text Editor is a simple tabbed text editor designed to help you learn Tkinter!",
+    )
+
+
+root = tk.Tk()
+root.title("Teclado Text Editor")
+root.option_add("*tearOff", False)
+
+main = ttk.Frame(root)
+main.pack(fill="both", expand=True, padx=(1), pady=(4, 0))
+
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+file_menu = tk.Menu(menubar)
+help_menu = tk.Menu(menubar)
+
+menubar.add_cascade(menu=file_menu, label="File")
+menubar.add_cascade(menu=help_menu, label="Help")
+
+file_menu.add_command(label="New", command=create_file, accelerator="Ctrl+N")
+file_menu.add_command(label="Open...", command=open_file, accelerator="Ctrl+O")
+file_menu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
+file_menu.add_command(
+    label="Close Tab", command=close_current_tab, accelerator="Ctrl+Q"
+)
+file_menu.add_command(label="Exit", command=confirm_quit)
+
+help_menu.add_command(label="About", command=show_about_info)
+
+notebook = ttk.Notebook(main)
+notebook.pack(fill="both", expand=True)
+
+create_file()
+
+root.bind("<KeyPress>", lambda event: check_for_changes())
+root.bind("<Control-n>", lambda event: create_file())
+root.bind("<Control-o>", lambda event: open_file())
+root.bind("<Control-q>", lambda event: close_current_tab())
+root.bind("<Control-s>", lambda event: save_file())
+
+root.mainloop()
+
+
+
+
+UNIT TESTING
+
+
+
+MULTIPLE FUNCTIONS IN A TEST CLASS TO TEST THE FOLLOWING TWO CLASSES
+
+class PrinterError(RuntimeError):
+    pass
+
+
+class Printer:
+    def __init__(self, pages_per_s: int, capacity: int):
+        self.pages_per_s = pages_per_s
+        self._capacity = capacity
+    
+    def print(self, pages):
+        if pages > self._capacity:
+            raise PrinterError('Printer does not have enough capacity for all these pages.')
+        
+        self._capacity -= pages
+
+        return f'Printed {pages} pages in {pages/self.pages_per_s:.2f} seconds.'
+
+
+
+
+from printer import Printer, PrinterError
+from unittest import TestCase
+
+
+class TestPrinter(TestCase):
+    def setUp(self):
+        self.printer = Printer(pages_per_s=2.0, capacity=300)
+    
+    def test_print_within_capacity(self):
+        self.printer.print(25)
+    
+    def test_print_outside_capacity(self):
+        with self.assertRaises(PrinterError):
+            self.printer.print(301)
+    
+    def test_print_exact_capacity(self):
+        self.printer.print(self.printer._capacity)
+    
+    def test_printer_speed(self):
+        pages = 10
+        expected = 'Printed 10 pages in 5.00 seconds.'
+
+        result = self.printer.print(pages)
+        self.assertEqual(result, expected)
+    
+    def test_speed_always_two_decimals(self):
+        fast_printer = Printer(pages_per_s=3.0, capacity=300)
+        pages = 11
+        expected = 'Printed 11 pages in 3.67 seconds.'
+
+        result = fast_printer.print(pages)
+        self.assertEqual(result, expected)
+
+    def test_multiple_print_runs(self):
+        self.printer.print(25)
+        self.printer.print(50)
+        self.printer.print(225)
+    
+    def test_multiple_runs_end_up_error(self):
+        self.printer.print(25)
+        self.printer.print(50)
+        self.printer.print(225)
+
+        with self.assertRaises(PrinterError):
+            self.printer.print(1)
 
 
 
 
 
+MULTIPLE FUNCTIONS IN A TEST CLASS TO TEST THE FOLLOWING TWO FUNCTIONS
+
+from typing import Union, Tuple
+
+def divide(dividend: Union[int, float], divisor: Union[int, float]):
+    if divisor == 0:
+        raise ValueError('The divisor cannot be zero.')
+    
+    return dividend / divisor
+
+
+def multiply(*args: Tuple[Union[int, float]]):
+    if len(args) == 0:
+        raise ValueError('At least one value to multiply must be passed.')
+    total = 1
+    for arg in args:
+        total *= arg
+    
+    return total
+
+
+
+from functions import divide, multiply
+from unittest import TestCase
+
+
+class TestFunctions(TestCase):
+    def test_divide_result(self):
+        dividend = 15
+        divisor = 3
+        expected_result = 5.0
+        self.assertAlmostEqual(divide(dividend, divisor), expected_result, delta=0.0001)
+
+    def test_divide_negative(self):
+        dividend = 15
+        divisor = -3
+        expected_result = -5.0
+        self.assertAlmostEqual(divide(dividend, divisor), expected_result, delta=0.0001)
+
+    def test_divide_dividend_zero(self):
+        dividend = 0
+        divisor = 5
+        expected_result = 0
+        self.assertEqual(divide(dividend, divisor), expected_result)
+
+    def test_divide_error_on_zero(self):
+        with self.assertRaises(ValueError):
+            divide(25, 0)
+
+    def test_multiply_empty(self):
+        with self.assertRaises(ValueError):
+            multiply()
+
+    def test_multiply_single_value(self):
+        expected = 15
+        self.assertEqual(multiply(expected), expected)
+
+    def test_multiply_zero(self):
+        expected = 0
+        self.assertEqual(multiply(expected), expected)
+
+    def test_multiply_result(self):
+        inputs = (3, 5)
+        expected = 15
+        self.assertEqual(multiply(*inputs), expected)
+
+    def test_multiply_results_with_zero(self):
+        inputs = (3, 5, 0)
+        expected = 0
+        self.assertEqual(multiply(*inputs), expected)
+
+    def test_multiply_negative(self):
+        inputs = (3, -5, 2)
+        expected = -30
+        self.assertEqual(multiply(*inputs), expected)
+
+    def test_multiply_floats(self):
+        inputs = (3.0, 2)
+        expected = 6.0
+        self.assertEqual(multiply(*inputs), expected)
+
+
+
+
+USING A PATCH, MAJICK MOCK, AND A FAKE RESPONSE TO TEST REQUESTS.GET AND RETURNED CONTENT 
+
+
+from page import PageRequester
+from unittest import TestCase
+from unittest.mock import patch
+
+import requests
+
+class PageRequester:
+    def __init__(self, url):
+        self.url = url
+    
+    def get(self):
+        return requests.get(self.url).
+
+
+
+class TestPageRequester(TestCase):
+    def setUp(self):
+        self.page = PageRequester('https://google.com')
+
+    def test_make_request(self):
+        with patch('requests.get') as mocked_get:
+            self.page.get()
+            mocked_get.assert_called()
+    
+    def test_content_returned(self):
+        class FakeResponse:
+            def __init__(self):
+                self.content = 'Hello'
+
+        with patch('requests.get', return_value=FakeResponse()) as mocked_get:
+            result = self.page.get()
+            self.assertEqual(result, 'Hello')
 
 
 
 
 
+BINARY TREE ALGORITHM
 
+import typing #this is for type hinting
+
+class Node:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+    def __repr__(self):
+        return f'<Node {self.value}>'
+
+
+
+class Binary_Tree:
+    def __init__(self, head: Node):
+        self.head = head
+
+    def add(self, new_node: Node):
+        current_node = self.head # this is the top of the tree
+	while current_node: # now move through the tree until you add a new node or reach the bottom of the tree
+            if new_node.value == current_node.value:
+		raise ValueError('A node with that value already exists.')
+	    elif new_node.value < current_node.value:
+		if current_node.left:
+		    current_node = current_node.left
+		else:
+   		    current_node.left = new_node
+		    break
+	    elif new_node.value > current_node.value:
+		if current_node.right:
+		    current_node = current_node.right
+                else:
+ 		    current_node.right = new_node
+		    break
+
+
+    def find(self, value: int):
+        current_node =  self.head
+        while current_node:
+            if value == current_node.value:
+                return current_node
+            elif value > current_node.value:
+		current_node = current_node.right
+	    else:
+                current_node = current_node.left
+        raise LookupError(f'a node with value {value} was not found.')
+
+
+    def find_parent(self, value: int) -> Node:
+	if self.head and self.head.value == value:
+             return self.head
+	current_node = self.head
+	while current_node:
+	    if (current_node.left and current_node.left.value == value) or\
+		(current_node.right and current_node.right.value == value):
+		return current_node
+	    elif value > current_node.value:
+                current = current_node.right
+            elif value < current_node.value:
+                current_node =  current_node.left
+
+
+    def find_rightmost(self, node: Node) -> Node:
+        current_node = node
+        while current_node.right:
+	    current_node = current_node.right
+        return current_node
+
+    
+    def delete(self, value: int):
+	to_delete = self.find(value)
+	to_delete_parent = self.find_parent(value)
+
+        if to_delete.left and to_delete.right
+	    rightmost = self.find_rightmost(to_delete.left)
+	    rightmost_parent = self.find_parent(rightmost.value)
+
+	    if rightmost_parent != to_delete:
+		rightmost_parent.right = rightmost.left
+		rightmost.left = to_delete.left
+	    rightmost.right = to_delete.right
+
+	    if to_delete == to_delete_parent.left:
+		to_delete_parent.left = rightmost
+	    elif to_delete == to_delete_parent.right:
+	        to_delete_parent.right = rightmost
+	    else:
+		self.head = rightmost
+
+
+        elif to_delete.left or to_delete.right
+	    if to_delete == to_delete_parent.left:
+	        to_delete_parent.left = to_delete.right or to_delete.left
+	    elif: to_delete == to_delete_parent.right:
+		    to_delete_parent.right = to_delete.right or to_delete.left
+	    else:
+	        self.head = to_delete.right or to_delete.left
+
+        else:
+ 	    if to_delete == to_delete.parent.left:
+		to_delete_parent.left = None
+	    elif to_delete == to_delete.parent.right:
+		to_delete_parent.right ==  None
+	    else:
+		self.head = None
+            
+    
+    def inorder(self): #BINARY TREE IN ORDER WITH RECURSION 
+        self._inorder_recursive(self.head)
+
+    def _inorder_recursive(self, current_node):
+        if not current_node:
+            return
+        self._inorder_recursive(current_node.left)# a method calling itself is recursion
+        print(current_node)
+        self._inorder_recursive(current_node.right)# a method calling itself is recursion
+
+
+
+RUNNING THE BINARY TREE APP
+
+from binary_tree import BinaryTree
+from node import Node
+
+tree = BinaryTree(Node(6))
+
+nodes = [5, 3, 9, 7, 8, 7.5, 12, 11]
+
+for n in nodes:
+tree.add(Node(n))
+
+tree.delete(9)
+tree.inorder()
+
+
+
+
+SENDING EMAILS WITH PYTHON
+
+
+"""
+If you get an SMTPAuthenticationError even when your password is correct, 
+it's possible that you have 2-factor authentication enabled.
+You'll need to use an App Password to log in instead of your normal password.
+
+If you don't have 2-FA enabled, you'll have to allow access by 
+less secure apps in your Gmail security preferences-though remember to deactivate
+it once you've finished learning about sending e-mails with Python.
+"""
+
+
+import smtplib
+from email.message import EmailMessage
+
+email_content = '''Dear Sir/Madam,
+
+I am sending you an e-mail with Python. I hope you like it.
+
+Kind regards,
+Mike
+'''
+
+email = EmailMessage()
+
+email['Subject'] = 'Test email'
+email['From'] = 'you@gmail.com'
+email['To'] = 'someonelse@gmail.com'
+
+email.set_content(email_content)
+
+
+smtp_connector = smtp.SMTP(host='smtp.gmail.com', port=587)
+smtp_connector.starttls()
+smtp_connector.login('you@gmail.com', 'password')
+
+smtp_connector.send_message(email)
+smtp_connector.quit()
+
+
+
+    
+USING AN EMAIL SENDING SERVICE WITH PYTHON
+
+MAILGUN_API_URL = 'https//www.TheDataDeveloper.com'
+MAILGUN_API_KEY = '1986-HGRT-9874-TTBF-OPLI-888'
+
+FROM_NAME = 'Mike'
+FROM_EMAIL = 'emailmsj@gmail.com'
+
+TO_EMAILS = ['another@gmail.com']
+SUBJECT = 'Test e-mail'
+CONTENT = 'Hello, this is a test e-mail'
+
+requests.post(
+	MAILGUN_API_URL,
+	auth=('api', MAILGUN_API_KEY), # This is Basic Auth
+	data={
+	    'from': f'{FROM_NAME}, <{FROM_EMAIL}>',
+	    'to': TO_EMAILS,
+            'subject': SUBJECT,
+            'text': CONTENT
+         })
+
+
+CREATING A RESUABLE EMAIL SENDING PROGRAM
+
+import requests
+
+class Mailgun:
+    MAILGUN_API_URL = 'your_url' 
+    MAILGUN_API_KEY = 'your_api_key' # security issue by putting api key in your code if your going to be sharing with other people
+
+    FROM_NAME = 'Mike' # could repeal hard code
+    FROM_EMAIL = 'emailmsj@gmail.com' # could repeal hard code
+
+    @classmethod
+    def send_email(cls, to_emails, subject, content, # could also include from_name=FROM_NAME and from_email=FROM_EMAIL):
+        requests.post(
+	cls.MAILGUN_API_URL,
+	auth=('api', cls.MAILGUN_API_KEY), 
+	data={
+	    'from': f'{cls.FROM_NAME}, <{cls.FROM_EMAIL}>',
+	    'to': to_emails,
+            'subject': subject,
+            'text': content
+         })
+
+
+
+from libs.mailgun import Mailgun
+
+Mailgun.send_email(['test@gmail.com'], subject='Test e-mail', content='This is a test e-mail') # called with named arguments
+    
+
+
+ 
+
+
+
+	    
 
 
 

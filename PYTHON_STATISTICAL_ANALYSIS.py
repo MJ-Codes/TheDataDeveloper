@@ -677,6 +677,16 @@ plt.show()
 
 
 
+GENERATING ONE BOOTSTRAP REPLICATE
+
+def bootstrap_replicate_1d(data, func):
+    """Generate bootstrap replicate of 1D data."""
+    bs_sample = np.random.choice(data, len(data))
+    return func(bs_sample)
+
+
+
+
 GENERATING MULTIPLE BOOTSTRAP REPLICATES
 
 def draw_bs_reps(data, func, size=1):
@@ -976,6 +986,85 @@ bs_replicates = bs_replicates_a - bs_replicates_b
 # Compute and print p-value: p
 p = np.sum(bs_replicates >= empirical_diff_means) / len(bs_replicates)
 print('p-value =', p)
+
+
+TWO SAMPLE BOOTSTRAP HYPOTHESIS TEST FOR DIFFERENCE OF THE MEANS ON BEE SPERM COUNT
+
+# Compute the difference in mean sperm count: diff_means
+diff_means = np.mean(control) - np.mean(treated)
+
+# Compute mean of pooled data: mean_count
+mean_count = np.mean(np.concatenate((control, treated)))
+
+# Generate shifted data sets
+control_shifted = control - np.mean(control) + mean_count
+treated_shifted = treated - np.mean(treated) + mean_count
+
+# Generate bootstrap replicates
+bs_reps_control = draw_bs_reps(control_shifted,
+                               np.mean, size=10000)
+bs_reps_treated = draw_bs_reps(treated_shifted,
+                               np.mean, size=10000)
+
+# Get replicates of difference of means: bs_replicates
+bs_replicates = bs_reps_control - bs_reps_treated
+
+# Compute and print p-value: p
+p = np.sum(bs_replicates >= np.mean(control) - np.mean(treated)) \
+            / len(bs_replicates)
+print('p-value =', p)
+
+
+
+
+
+A/B TESTING
+
+# Construct arrays of data: dems, reps
+dems = np.array([True] * 153 + [False] * 91)
+reps = np.array([True] * 136 + [False] * 35)
+
+def frac_yea_dems(dems, reps):
+    """Compute fraction of Democrat yea votes."""
+    frac = sum(dems) / len(dems)
+    return frac
+
+# Acquire permutation samples: perm_replicates
+perm_replicates = draw_perm_reps(dems, reps, frac_yea_dems, 10000)
+
+# Compute and print p-value: p
+p = np.sum(perm_replicates <= 153/244) / len(perm_replicates)
+print('p-value =', p)
+
+
+
+HYPOTHESIS TEST ON PEARSON CORRELATION
+
+# Compute observed correlation: r_obs
+r_obs = pearson_r(illiteracy, fertility)
+
+# Initialize permutation replicates: perm_replicates
+perm_replicates = np.empty(10000)
+
+# Draw replicates
+for i in range(10000):
+    # Permute illiteracy measurments: illiteracy_permuted
+    illiteracy_permuted = np.random.permutation(illiteracy)
+
+    # Compute Pearson correlation
+    perm_replicates[i] = pearson_r(illiteracy_permuted, fertility)
+
+# Compute p-value: p
+p = np.sum(perm_replicates >= r_obs) / len(perm_replicates)
+print('p-val =', p)
+
+
+
+
+
+
+
+
 
 
 
